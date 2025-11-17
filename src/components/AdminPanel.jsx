@@ -205,6 +205,9 @@ export default function AdminPanel() {
     )
   }
 
+  const unapproved = useMemo(() => testimonials.filter(t => t.status !== 'approved'), [testimonials])
+  const approved = useMemo(() => testimonials.filter(t => t.status === 'approved'), [testimonials])
+
   return (
     <section id="admin" className="min-h-screen bg-[#050b1b] text-white">
       <div className="max-w-6xl mx-auto px-4 py-10">
@@ -273,9 +276,23 @@ export default function AdminPanel() {
               <h2 className="font-semibold">Add Testimonial</h2>
               <TestimonialForm onSubmit={(data) => create('testimonials', data)} loading={loading} />
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-              <h2 className="font-semibold mb-3">Existing</h2>
-              <List items={testimonials} fields={[["name"],["role"],["company"],["rating"],["status"],["quote"]]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
+
+            <div className="space-y-8">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-semibold">Unapproved</h2>
+                  <span className="text-xs text-white/60">{unapproved.length} item(s)</span>
+                </div>
+                <List items={unapproved} fields={[["name"],["role"],["company"],["rating"],["status"],["quote"]]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-semibold">Approved</h2>
+                  <span className="text-xs text-white/60">{approved.length} item(s)</span>
+                </div>
+                <List items={approved} fields={[["name"],["role"],["company"],["rating"],["status"],["quote"]]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
+              </div>
             </div>
           </div>
         )}
