@@ -39,6 +39,22 @@ export default function Hero() {
     }
   }
 
+  // Keyboard accessibility: W = Works, R = Resume, H/C = Hire/Contact, 1/2/3 as alternatives
+  useEffect(() => {
+    const onKey = (e) => {
+      const key = e.key.toLowerCase()
+      if (key === 'w' || key === '1') {
+        handleAction('works')
+      } else if (key === 'r' || key === '2') {
+        handleAction('resume')
+      } else if (key === 'h' || key === 'c' || key === '3') {
+        handleAction('hire me')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
     <section id="about" className="relative min-h-[90vh] w-full overflow-hidden bg-[#050b1b]">
       {/* Hyperspeed lights behind Spline */}
