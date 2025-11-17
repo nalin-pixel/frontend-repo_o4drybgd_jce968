@@ -40,20 +40,23 @@ export default function AdminPanel() {
   const [projects, setProjects] = useState([])
   const [testimonials, setTestimonials] = useState([])
   const [settings, setSettings] = useState({ key: 'ui', marquee_a_seconds: 30, marquee_b_seconds: 28, glow_intensity: 0.25, parallax_intensity: 8 })
+  const [users, setUsers] = useState([])
 
   const fetchAll = async () => {
     try {
-      const [c1, c2, c3, c4, s1] = await Promise.all([
+      const [c1, c2, c3, c4, s1, u1] = await Promise.all([
         fetch(`${API}/api/categories`).then(r => r.json()),
         fetch(`${API}/api/clients`).then(r => r.json()),
         fetch(`${API}/api/projects`).then(r => r.json()),
         fetch(`${API}/api/testimonials`).then(r => r.json()),
         fetch(`${API}/api/settings`).then(r => r.json()),
+        fetch(`${API}/api/users`).then(r => r.json()).catch(()=>[]),
       ])
       setCategories(c1)
       setClients(c2)
       setProjects(c3)
       setTestimonials(c4)
+      setUsers(Array.isArray(u1)? u1 : [])
       if (s1 && s1.key) setSettings(prev => ({
         ...prev,
         ...s1,
@@ -92,6 +95,19 @@ export default function AdminPanel() {
       if (!res.ok) throw new Error('Request failed')
       await fetchAll()
       setMessage('Updated')
+    } catch (e) { setMessage('Error: ' + e.message) } finally { setLoading(false) }
+  }
+
+  const updateUser = async (id, body) => {
+    setLoading(true)
+    setMessage('')
+    try {
+      const res = await fetch(`${API}/api/users/${id}/verify-admin`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      })
+      if (!res.ok) throw new Error('Request failed')
+      await fetchAll()
+      setMessage('User updated')
     } catch (e) { setMessage('Error: ' + e.message) } finally { setLoading(false) }
   }
 
@@ -149,13 +165,13 @@ export default function AdminPanel() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Admin CMS</h1>
-            <p className="text-white/60 mt-1">Manage categories, clients, projects, testimonials, and UI settings.</p>
+            <p className="text-white/60 mt-1">Manage categories, clients, projects, testimonials, users, and UI settings.</p>
           </div>
           <button onClick={seed} disabled={loading} className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold hover:bg-emerald-500">{loading ? 'Working…' : 'Preload sample data'}</button>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {['categories','clients','projects','testimonials','settings'].map(t => (
+          {['categories','clients','projects','testimonials','users','settings'].map(t => (
             <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-1.5 text-sm border ${tab===t? 'border-white/60 bg-white/10' : 'border-white/10 bg-white/5'}`}>{t}</button>
           ))}
         </div>
@@ -214,6 +230,37 @@ export default function AdminPanel() {
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <h2 className="font-semibold mb-3">Existing</h2>
               <List items={testimonials} fields={[["name"],["role"],["company"],["rating"],["quote"]]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
+            </div>
+          </div>
+        )}
+
+        {/* Users */}
+        {tab==='users' && (
+          <div className="mt-8 grid gap-8">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+              <h2 className="font-semibold mb-3">User Accounts</h2>
+              <div className="space-y-3">
+                {users.length===0 && <div className="text-white/70 text-sm">No users yet. Use the Sign up button in the header to create one.</div>}
+                {users.map(u => (
+                  <div key={u.id} className="rounded-lg border border-white/10 p-3 flex items-center justify-between">
+                    <div className="text-sm">
+                      <div className="font-medium">{u.name}</div>
+                      <div className="text-white/60">{u.email}</div>
+                      <div className="text-white/60">Created: {new Date(u.created_at).toLocaleString?.() || ''}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 text-xs">
+                        <input type="checkbox" checked={!!u.is_verified} onChange={e=>updateUser(u.id, { is_verified: e.target.checked })} />
+                        <span>Verified</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs">
+                        <input type="checkbox" checked={!!u.is_admin} onChange={e=>updateUser(u.id, { is_admin: e.target.checked })} />
+                        <span>Admin</span>
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

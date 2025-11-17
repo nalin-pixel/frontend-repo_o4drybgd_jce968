@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, UserPlus } from 'lucide-react'
+import SignUpModal from './SignUpModal'
 
 const links = [
   { label: 'About', href: '#about' },
@@ -11,6 +12,7 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [showSignUp, setShowSignUp] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -32,17 +34,25 @@ export default function Navbar() {
           <div className="text-[10px] uppercase tracking-[0.2em] text-white/60">Portfolio</div>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm">
+        <nav className="hidden md:flex items-center gap-6 text-sm">
           {links.map((l) => (
             <button key={l.href} onClick={() => handleNav(l.href)} className="text-white/80 hover:text-white transition-colors">
               {l.label}
             </button>
           ))}
+          <button onClick={()=>setShowSignUp(true)} className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium">
+            <UserPlus size={16} /> Sign up
+          </button>
         </nav>
 
-        <button className="md:hidden text-white" onClick={() => setOpen(!open)} aria-label="Toggle menu">
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="md:hidden flex items-center gap-3">
+          <button onClick={()=>setShowSignUp(true)} className="text-white" aria-label="Sign up">
+            <UserPlus size={20} />
+          </button>
+          <button className="text-white" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -53,9 +63,13 @@ export default function Navbar() {
                 {l.label}
               </button>
             ))}
+            <button onClick={()=>{ setShowSignUp(true); setOpen(false) }} className="py-2 text-left text-white/80 hover:text-white inline-flex items-center gap-2">
+              <UserPlus size={16} /> Sign up
+            </button>
           </div>
         </div>
       )}
+      <SignUpModal open={showSignUp} onClose={()=>setShowSignUp(false)} />
     </header>
   )
 }

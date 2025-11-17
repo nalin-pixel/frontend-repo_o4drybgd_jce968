@@ -10,6 +10,7 @@ import MotionSection from './components/MotionSection'
 import AuroraBackground from './components/AuroraBackground'
 import CursorGlow from './components/CursorGlow'
 import ScrollProgress from './components/ScrollProgress'
+import AdminPanel from './components/AdminPanel'
 
 function App() {
   return (
@@ -47,6 +48,11 @@ function App() {
 
         <MotionSection delay={0.25}>
           <Contact />
+        </MotionSection>
+
+        {/* Admin section anchor is inside the component (id="admin") */}
+        <MotionSection delay={0.3}>
+          <AdminPanel />
         </MotionSection>
       </main>
       <SocialIsland />
