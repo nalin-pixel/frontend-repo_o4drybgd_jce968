@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Palette, Camera, Shield, LayoutDashboard, Megaphone, ChevronRight } from 'lucide-react'
+import HoverArtCard from './HoverArtCard'
 
 const categories = [
   { key: 'uiux', icon: LayoutDashboard, title: 'UI/UX Design', desc: 'Human-centered product design, wireframes, user flows, prototypes.', clients: ['Finpay', 'NeoBank', 'MedTrack'] },
@@ -73,18 +74,19 @@ export default function PortfolioTypes() {
         {/* Categories */}
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
           {categories.map((c) => (
-            <button
-              key={c.key}
-              onClick={() => { setActiveCat(c.key); setActiveClient(null) }}
-              className={`group text-left rounded-2xl border ${activeCat===c.key? 'border-white/60' : 'border-white/10'} bg-white/5 p-5 backdrop-blur hover:bg-white/10 transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.25)]`}
-            >
-              <c.icon className="text-white/80" />
-              <div className="mt-3 text-lg font-semibold flex items-center justify-between">
-                <span>{c.title}</span>
-                <ChevronRight className="opacity-0 group-hover:opacity-100 transition-opacity" size={18}/>
-              </div>
-              <div className="text-sm text-white/60">{c.desc}</div>
-            </button>
+            <HoverArtCard key={c.key} className={`group text-left rounded-2xl border ${activeCat===c.key? 'border-white/60' : 'border-white/10'} bg-white/5 p-5 backdrop-blur hover:bg-white/10 transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.25)]`}>
+              <button
+                onClick={() => { setActiveCat(c.key); setActiveClient(null) }}
+                className="w-full text-left"
+              >
+                <c.icon className="text-white/80" />
+                <div className="mt-3 text-lg font-semibold flex items-center justify-between">
+                  <span>{c.title}</span>
+                  <ChevronRight className="opacity-0 group-hover:opacity-100 transition-opacity" size={18}/>
+                </div>
+                <div className="text-sm text-white/60">{c.desc}</div>
+              </button>
+            </HoverArtCard>
           ))}
         </div>
 
@@ -110,12 +112,12 @@ export default function PortfolioTypes() {
         {activeClient && (
           <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((p, i) => (
-              <div key={i} className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-5 hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] transition-all">
+              <HoverArtCard key={i} className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-5 hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] transition-all">
                 <div className="aspect-video rounded-xl bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_60%),radial-gradient(circle_at_80%_60%,rgba(255,255,255,0.08),transparent_60%)] border border-white/10 mb-4 group-hover:border-white/60 transition-colors" />
                 <div className="text-lg font-semibold">{p.title}</div>
                 <div className="text-white/60 text-sm">{p.tag}</div>
                 <div className="text-white/60 text-sm mt-1">{p.desc}</div>
-              </div>
+              </HoverArtCard>
             ))}
           </div>
         )}

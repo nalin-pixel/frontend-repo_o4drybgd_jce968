@@ -1,3 +1,5 @@
+import HoverArtCard from './HoverArtCard'
+
 export default function WorksPreview() {
   const works = [
     { title: 'Fintech App UX', tag: 'UI/UX Design' },
@@ -16,16 +18,13 @@ export default function WorksPreview() {
         <h2 className="text-3xl font-bold">Work Glimpses</h2>
         <div className="mt-10 grid md:grid-cols-3 gap-6">
           {works.map((w, idx) => (
-            <div
-              key={idx}
-              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 hover:border-white/60 hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] transition-all"
-            >
+            <HoverArtCard key={idx} className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 hover:border-white/60 hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] transition-all">
               <div className="aspect-[4/3] bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_60%),radial-gradient(circle_at_80%_60%,rgba(255,255,255,0.08),transparent_60%)]" />
               <div className="p-6">
                 <div className="text-lg font-semibold">{w.title}</div>
                 <div className="text-white/60">{w.tag}</div>
               </div>
-            </div>
+            </HoverArtCard>
           ))}
         </div>
       </div>

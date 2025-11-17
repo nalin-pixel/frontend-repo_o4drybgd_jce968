@@ -1,15 +1,23 @@
 import { useState } from 'react'
 import Spline from '@splinetool/react-spline'
+import HyperdriveBackground from './HyperdriveBackground'
 
 export default function Hero() {
   const [open, setOpen] = useState(false)
 
   return (
     <section id="about" className="relative min-h-[90vh] w-full overflow-hidden bg-[#050b1b]">
+      {/* Hyperspeed lights behind Spline */}
       <div className="absolute inset-0">
+        <HyperdriveBackground density={160} speed={1.0} />
+      </div>
+
+      {/* 3D scene */}
+      <div className="absolute inset-0 mix-blend-screen opacity-[0.92]">
         <Spline scene="https://prod.spline.design/VJLoxp84lCdVfdZu/scene.splinecode" style={{ width: '100%', height: '100%' }} />
       </div>
 
+      {/* dark gradient veil */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#050b1b]/40 via-[#050b1b]/60 to-[#050b1b] pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex flex-col lg:flex-row items-center gap-10">
