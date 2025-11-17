@@ -4,25 +4,114 @@ const testimonials = [
   {
     name: 'A. Santoso',
     role: 'Product Manager, Fintech',
+    company: 'VoltPay',
+    rating: 5,
+    logo: '',
     quote:
       'Raffi quickly translated complex requirements into clean, intuitive flows. The sprint velocity went up 20%.',
   },
   {
     name: 'N. Wijaya',
     role: 'Marketing Lead, D2C',
+    company: 'BloomCo',
+    rating: 5,
+    logo: '',
     quote:
       'Our campaign hit record CTR thanks to a cohesive visual system and analytics-driven adjustments.',
   },
   {
     name: 'J. Park',
     role: 'Security Lead, SaaS',
+    company: 'Secura',
+    rating: 4,
+    logo: '',
     quote:
       'His blue-team mindset and SIEM knowledge helped us tighten detections without slowing delivery.',
   },
+  {
+    name: 'M. Rivera',
+    role: 'CTO, HealthTech',
+    company: 'Vitality',
+    rating: 5,
+    logo: '',
+    quote:
+      'From idea to production in three weeks. Clear communication and thoughtful trade-offs throughout.',
+  },
+  {
+    name: 'K. Nguyen',
+    role: 'Founder, SaaS',
+    company: 'Northbeam',
+    rating: 5,
+    logo: '',
+    quote:
+      'The design system and motion guidelines elevated our brand and sped up feature delivery for the team.',
+  },
 ]
 
+function sizeClassForQuote(q) {
+  const len = q.length
+  if (len < 120) return 'min-w-[280px] sm:min-w-[340px] md:min-w-[380px]'
+  if (len < 220) return 'min-w-[340px] sm:min-w-[420px] md:min-w-[520px]'
+  return 'min-w-[420px] sm:min-w-[520px] md:min-w-[640px]'
+}
+
+function Stars({ count = 5 }) {
+  return (
+    <div className="flex items-center gap-1 text-amber-300">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <svg
+          key={i}
+          className={`h-4 w-4 ${i < count ? 'fill-amber-300' : 'fill-transparent'} stroke-amber-300`}
+          viewBox="0 0 24 24"
+        >
+          <path strokeWidth="1.5" d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z" />
+        </svg>
+      ))}
+    </div>
+  )
+}
+
+function LogoBadge({ name, logo }) {
+  if (logo) {
+    return <img src={logo} alt={name} className="h-8 w-8 rounded-full object-cover" />
+  }
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+  return (
+    <div className="h-8 w-8 rounded-full bg-white/10 text-white/70 grid place-items-center text-xs font-semibold">
+      {initials}
+    </div>
+  )
+}
+
+function TestimonialCard({ t }) {
+  const widthClass = sizeClassForQuote(t.quote)
+  return (
+    <div
+      className={`${widthClass} rounded-2xl border border-white/10 bg-white/5 p-6 md:p-7 backdrop-blur hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:border-white/60 transition-all h-auto`}
+    >
+      <Stars count={t.rating} />
+      <p className="mt-3 text-white/80 whitespace-normal break-words leading-relaxed text-base md:text-lg">“{t.quote}”</p>
+      <div className="mt-5 flex items-center gap-3 text-white/70">
+        <LogoBadge name={t.company || t.name} logo={t.logo} />
+        <div className="text-sm md:text-base">
+          <div className="font-medium text-white/90">{t.name}</div>
+          <div className="text-white/60">{t.role}{t.company ? `, ${t.company}` : ''}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Testimonials() {
-  const loopData = useMemo(() => Array.from({ length: 6 }).flatMap(() => testimonials), [])
+  const base = useMemo(() => testimonials, [])
+  // Duplicate to ensure seamless marquee
+  const loopA = useMemo(() => Array.from({ length: 4 }).flatMap(() => base), [base])
+  const loopB = useMemo(() => Array.from({ length: 4 }).flatMap(() => [...base].reverse()), [base])
 
   return (
     <section className="relative bg-[#040a19] text-white py-20 overflow-hidden">
@@ -34,16 +123,21 @@ export default function Testimonials() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold">Client Testimonials</h2>
+
+        {/* Row 1 */}
         <div className="mt-8 relative overflow-hidden">
           <div className="flex gap-6 whitespace-nowrap will-change-transform animate-marquee items-stretch">
-            {loopData.map((t, idx) => (
-              <div
-                key={idx}
-                className="min-w-[360px] sm:min-w-[420px] md:min-w-[520px] rounded-2xl border border-white/10 bg-white/5 p-6 md:p-7 backdrop-blur hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:border-white/60 transition-all h-auto"
-              >
-                <p className="text-white/80 whitespace-normal break-words leading-relaxed text-base md:text-lg">“{t.quote}”</p>
-                <div className="mt-4 text-sm md:text-base text-white/60 whitespace-normal break-words">{t.name} • {t.role}</div>
-              </div>
+            {loopA.map((t, idx) => (
+              <TestimonialCard key={`a-${idx}`} t={t} />
+            ))}
+          </div>
+        </div>
+
+        {/* Row 2 (appears on md+), reverse direction */}
+        <div className="mt-6 relative overflow-hidden hidden md:block">
+          <div className="flex gap-6 whitespace-nowrap will-change-transform animate-marquee-reverse items-stretch">
+            {loopB.map((t, idx) => (
+              <TestimonialCard key={`b-${idx}`} t={t} />
             ))}
           </div>
         </div>
@@ -54,10 +148,12 @@ export default function Testimonials() {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-          width: 200%;
+        @keyframes marquee-reverse {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
         }
+        .animate-marquee { animation: marquee 30s linear infinite; width: 200%; }
+        .animate-marquee-reverse { animation: marquee-reverse 28s linear infinite; width: 200%; }
         @keyframes flicker { 0%, 100% { opacity: .9 } 50% { opacity: .4 } }
         .animate-flicker { animation: flicker 5s ease-in-out infinite; }
         .animate-flicker-delayed { animation: flicker 6.5s ease-in-out infinite; }
