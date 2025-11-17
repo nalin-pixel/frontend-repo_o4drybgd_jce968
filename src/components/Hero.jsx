@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Spline from '@splinetool/react-spline'
 import HyperdriveBackground from './HyperdriveBackground'
 
@@ -14,6 +14,7 @@ export default function Hero() {
 
   const handleAction = (label) => {
     const n = (label || '').toLowerCase()
+    if (!n) return
     if (n.includes('work')) {
       goTo('portfolio')
     } else if (n.includes('resume')) {
@@ -23,37 +24,38 @@ export default function Hero() {
     }
   }
 
+  // Handle Spline events via both React handlers and runtime listeners for robustness
+  const handleSplineEvent = (e) => {
+    const name = e?.target?.name || e?.object?.name || e?.detail?.target?.name || ''
+    if (name) {
+      // eslint-disable-next-line no-console
+      console.debug('[Spline interaction]', name)
+      handleAction(name)
+    }
+  }
+
   const onSplineLoad = (spline) => {
     try {
-      spline.addEventListener('mouseDown', (e) => {
+      spline.addEventListener?.('mouseDown', (e) => {
         const name = e?.target?.name || ''
         handleAction(name)
       })
-      // Optional: also react to "mouseUp" if your scene emits on release instead of press
       spline.addEventListener?.('mouseUp', (e) => {
         const name = e?.target?.name || ''
         handleAction(name)
       })
+      spline.addEventListener?.('click', (e) => {
+        const name = e?.target?.name || ''
+        handleAction(name)
+      })
+      spline.addEventListener?.('pointerdown', (e) => {
+        const name = e?.target?.name || ''
+        handleAction(name)
+      })
     } catch (e) {
-      // fail silently if events are not available
+      // ignore if events aren't available
     }
   }
-
-  // Keyboard accessibility: W = Works, R = Resume, H/C = Hire/Contact, 1/2/3 as alternatives
-  useEffect(() => {
-    const onKey = (e) => {
-      const key = e.key.toLowerCase()
-      if (key === 'w' || key === '1') {
-        handleAction('works')
-      } else if (key === 'r' || key === '2') {
-        handleAction('resume')
-      } else if (key === 'h' || key === 'c' || key === '3') {
-        handleAction('hire me')
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
 
   return (
     <section id="about" className="relative min-h-[90vh] w-full overflow-hidden bg-[#050b1b]">
@@ -63,21 +65,28 @@ export default function Hero() {
       </div>
 
       {/* 3D scene */}
-      <div className="absolute inset-0 mix-blend-screen opacity-[0.92]">
-        <Spline scene="https://prod.spline.design/VJLoxp84lCdVfdZu/scene.splinecode" style={{ width: '100%', height: '100%' }} onLoad={onSplineLoad} />
+      <div className="absolute inset-0 mix-blend-screen opacity-[0.92] pointer-events-auto">
+        <Spline
+          scene="https://prod.spline.design/VJLoxp84lCdVfdZu/scene.splinecode"
+          style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}
+          onLoad={onSplineLoad}
+          onMouseDown={handleSplineEvent}
+          onMouseUp={handleSplineEvent}
+          onClick={handleSplineEvent}
+        />
       </div>
 
       {/* dark gradient veil */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#050b1b]/40 via-[#050b1b]/60 to-[#050b1b] pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex flex-col lg:flex-row items-center gap-10">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex flex-col lg:flex-row items-center gap-10 pointer-events-none">
         <div className="w-full lg:w-1/2 text-white">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">Raffi Alvriansyah</h1>
           <p className="mt-4 text-lg text-white/80">
             Blending cybersecurity, product design, and digital marketing into impactful experiences.
           </p>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-6 flex items-center gap-3 pointer-events-auto">
             <button onClick={() => setOpen(!open)} className="relative inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:shadow-[0_0_30px_rgba(255,255,255,0.35)] hover:border-white/60 border border-transparent transition-all">
               {open ? 'Hide details' : 'View more'}
             </button>
