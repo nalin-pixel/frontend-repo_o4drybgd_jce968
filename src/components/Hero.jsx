@@ -4,6 +4,29 @@ import HyperdriveBackground from './HyperdriveBackground'
 
 const RESUME_URL = import.meta.env.VITE_RESUME_URL || '/resume.pdf'
 
+// Optional fallback mapping by stable identifiers from Spline events
+// Fill these once we see ids in the console (e.g., { 'abc123': 'work' })
+const FALLBACK_ID_MAP = {
+  // 'abc123': 'work',
+  // 'def456': 'resume',
+  // 'ghi789': 'contact',
+}
+
+function extractTargetInfo(evt) {
+  // Try common places Spline exposes a target
+  const tgt = evt?.target || evt?.object || evt?.detail?.target || null
+  const name = tgt?.name || ''
+  // Probe a handful of likely id fields without throwing on cycles
+  const id = tgt?.id || tgt?.uuid || tgt?.nodeId || tgt?.refId || ''
+  const type = tgt?.type || tgt?.className || ''
+  // Coordinates if present (helpful to distinguish left/mid/right clicks)
+  const pointer = {
+    x: evt?.clientX ?? evt?.detail?.clientX ?? undefined,
+    y: evt?.clientY ?? evt?.detail?.clientY ?? undefined,
+  }
+  return { name, id, type, pointer, rawTarget: tgt }
+}
+
 export default function Hero() {
   const [open, setOpen] = useState(false)
 
@@ -24,15 +47,23 @@ export default function Hero() {
     }
   }
 
-  // Handle Spline events via both React handlers and runtime listeners for robustness
-  const handleSplineEvent = (e) => {
-    const name = e?.target?.name || e?.object?.name || e?.detail?.target?.name || ''
+  // Central click handler: logs rich info and routes by name or fallback id map
+  const onAnySplineEvent = (evt) => {
+    const info = extractTargetInfo(evt)
     // eslint-disable-next-line no-console
-    console.debug('[Spline interaction raw event]', { name, e })
-    if (name) {
+    console.debug('[Spline interaction raw event]', info)
+
+    if (info.name) {
       // eslint-disable-next-line no-console
-      console.debug('[Spline interaction]', name)
-      handleAction(name)
+      console.debug('[Spline interaction]', info.name)
+      handleAction(info.name)
+      return
+    }
+    if (info.id && FALLBACK_ID_MAP[info.id]) {
+      const mapped = FALLBACK_ID_MAP[info.id]
+      // eslint-disable-next-line no-console
+      console.debug('[Spline interaction fallback by id]', info.id, '→', mapped)
+      handleAction(mapped)
     }
   }
 
@@ -40,26 +71,9 @@ export default function Hero() {
     try {
       // eslint-disable-next-line no-console
       console.debug('[Spline] loaded scene and attaching listeners')
-      spline.addEventListener?.('mouseDown', (e) => {
-        const name = e?.target?.name || ''
-        handleAction(name)
-      })
-      spline.addEventListener?.('mouseUp', (e) => {
-        const name = e?.target?.name || ''
-        handleAction(name)
-      })
-      spline.addEventListener?.('click', (e) => {
-        const name = e?.target?.name || ''
-        handleAction(name)
-      })
-      spline.addEventListener?.('pointerdown', (e) => {
-        const name = e?.target?.name || ''
-        handleAction(name)
-      })
-      spline.addEventListener?.('touchstart', (e) => {
-        const name = e?.target?.name || ''
-        handleAction(name)
-      })
+      const attach = (type) => spline.addEventListener?.(type, onAnySplineEvent)
+      ;['mouseDown','mouseUp','click','pointerdown','pointerup','touchstart','touchend']
+        .forEach(attach)
     } catch (e) {
       // eslint-disable-next-line no-console
       console.debug('[Spline] runtime listeners unavailable', e)
@@ -85,13 +99,13 @@ export default function Hero() {
           style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}
           onLoad={onSplineLoad}
           onError={onSplineError}
-          onMouseDown={handleSplineEvent}
-          onMouseUp={handleSplineEvent}
-          onClick={handleSplineEvent}
-          onPointerDown={handleSplineEvent}
-          onPointerUp={handleSplineEvent}
-          onTouchStart={handleSplineEvent}
-          onTouchEnd={handleSplineEvent}
+          onMouseDown={onAnySplineEvent}
+          onMouseUp={onAnySplineEvent}
+          onClick={onAnySplineEvent}
+          onPointerDown={onAnySplineEvent}
+          onPointerUp={onAnySplineEvent}
+          onTouchStart={onAnySplineEvent}
+          onTouchEnd={onAnySplineEvent}
         />
       </div>
 
