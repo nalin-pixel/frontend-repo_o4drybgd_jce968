@@ -42,26 +42,39 @@ export default function AdminPanel() {
   const [settings, setSettings] = useState({ key: 'ui', marquee_a_seconds: 30, marquee_b_seconds: 28, glow_intensity: 0.25, parallax_intensity: 8 })
   const [users, setUsers] = useState([])
 
+  const auth = JSON.parse(localStorage.getItem('auth') || 'null')
+  const authToken = auth?.token
+  const isAdmin = !!(auth?.user?.is_admin && auth?.user?.is_verified)
+
   const fetchAll = async () => {
     try {
-      const [c1, c2, c3, c4, s1, u1] = await Promise.all([
+      const [c1, c2, c3, c4, s1] = await Promise.all([
         fetch(`${API}/api/categories`).then(r => r.json()),
         fetch(`${API}/api/clients`).then(r => r.json()),
         fetch(`${API}/api/projects`).then(r => r.json()),
         fetch(`${API}/api/testimonials`).then(r => r.json()),
         fetch(`${API}/api/settings`).then(r => r.json()),
-        fetch(`${API}/api/users`).then(r => r.json()).catch(()=>[]),
       ])
       setCategories(c1)
       setClients(c2)
       setProjects(c3)
       setTestimonials(c4)
-      setUsers(Array.isArray(u1)? u1 : [])
       if (s1 && s1.key) setSettings(prev => ({
         ...prev,
         ...s1,
       }))
-      // broadcast latest settings to listeners for live preview
+      // Only fetch users if admin
+      if (isAdmin && authToken) {
+        try {
+          const ures = await fetch(`${API}/api/users`, { headers: { Authorization: `Bearer ${authToken}` } })
+          if (ures.ok) {
+            const u1 = await ures.json()
+            setUsers(Array.isArray(u1)? u1 : [])
+          }
+        } catch {}
+      } else {
+        setUsers([])
+      }
       window.dispatchEvent(new CustomEvent('ui-settings-updated', { detail: s1 }))
     } catch (e) {
       console.error(e)
@@ -77,7 +90,7 @@ export default function AdminPanel() {
     setMessage('')
     try {
       const res = await fetch(`${API}/api/${path}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify(body)
       })
       if (!res.ok) throw new Error('Request failed')
       await fetchAll()
@@ -90,7 +103,7 @@ export default function AdminPanel() {
     setMessage('')
     try {
       const res = await fetch(`${API}/api/${path}/${id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify(body)
       })
       if (!res.ok) throw new Error('Request failed')
       await fetchAll()
@@ -103,7 +116,7 @@ export default function AdminPanel() {
     setMessage('')
     try {
       const res = await fetch(`${API}/api/users/${id}/verify-admin`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify(body)
       })
       if (!res.ok) throw new Error('Request failed')
       await fetchAll()
@@ -116,7 +129,7 @@ export default function AdminPanel() {
     setLoading(true)
     setMessage('')
     try {
-      const res = await fetch(`${API}/api/${path}/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${API}/api/${path}/${id}`, { method: 'DELETE', headers: { ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) } })
       if (!res.ok) throw new Error('Request failed')
       await fetchAll()
       setMessage('Deleted')
@@ -127,7 +140,7 @@ export default function AdminPanel() {
     setLoading(true)
     setMessage('')
     try {
-      const res = await fetch(`${API}/api/seed`, { method: 'POST' })
+      const res = await fetch(`${API}/api/seed`, { method: 'POST', headers: { ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) } })
       if (!res.ok) throw new Error('Seeding failed')
       await fetchAll()
       setMessage('Sample data loaded')
@@ -142,12 +155,11 @@ export default function AdminPanel() {
     setLoading(true)
     setMessage('')
     try {
-      // create if none, else update by id
       if (!settings?.id) {
-        const res = await fetch(`${API}/api/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const res = await fetch(`${API}/api/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify(payload) })
         if (!res.ok) throw new Error('Save failed')
       } else {
-        const res = await fetch(`${API}/api/settings/${settings.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const res = await fetch(`${API}/api/settings/${settings.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify(payload) })
         if (!res.ok) throw new Error('Update failed')
       }
       await fetchAll()
@@ -157,6 +169,17 @@ export default function AdminPanel() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!isAdmin) {
+    return (
+      <section id="admin" className="min-h-[40vh] bg-[#050b1b] text-white">
+        <div className="max-w-6xl mx-auto px-4 py-10">
+          <h1 className="text-2xl font-semibold">Admin</h1>
+          <p className="text-white/70 mt-2">You need to sign in as a verified admin to access this area.</p>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -240,7 +263,7 @@ export default function AdminPanel() {
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <h2 className="font-semibold mb-3">User Accounts</h2>
               <div className="space-y-3">
-                {users.length===0 && <div className="text-white/70 text-sm">No users yet. Use the Sign up button in the header to create one.</div>}
+                {users.length===0 && <div className="text-white/70 text-sm">No users or you don't have permission to view them.</div>}
                 {users.map(u => (
                   <div key={u.id} className="rounded-lg border border-white/10 p-3 flex items-center justify-between">
                     <div className="text-sm">
@@ -341,35 +364,6 @@ function TestimonialForm({ onSubmit, loading }) {
       <NumberInput label="Rating (0-5)" min={0} max={5} step={1} value={form.rating} onChange={e=>setForm({...form, rating: Number(e.target.value)})} />
       <TextArea label="Quote" rows={3} value={form.quote} onChange={e=>setForm({...form, quote:e.target.value})} required />
       <button disabled={loading} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold">{loading? 'Saving...' : 'Save'}</button>
-    </form>
-  )
-}
-
-function SettingsForm({ initial, onSave, loading }) {
-  const [form, setForm] = useState(initial)
-  const [livePreview, setLivePreview] = useState(true)
-  useEffect(() => { setForm(initial) }, [initial])
-
-  // broadcast live preview when values change
-  useEffect(() => {
-    if (livePreview) {
-      window.dispatchEvent(new CustomEvent('ui-settings-preview', { detail: form }))
-    }
-  }, [form, livePreview])
-
-  return (
-    <form onSubmit={(e)=>{e.preventDefault(); onSave(form)}} className="grid md:grid-cols-2 gap-4">
-      <div className="md:col-span-2 flex items-center gap-3">
-        <input id="livePrev" type="checkbox" checked={livePreview} onChange={(e)=>setLivePreview(e.target.checked)} />
-        <label htmlFor="livePrev" className="text-sm text-white/80 select-none">Live preview in testimonials</label>
-      </div>
-      <NumberInput label="Marquee A seconds" min={5} max={120} step={0.5} value={form.marquee_a_seconds} onChange={e=>setForm({...form, marquee_a_seconds: Number(e.target.value)})} />
-      <NumberInput label="Marquee B seconds" min={5} max={120} step={0.5} value={form.marquee_b_seconds} onChange={e=>setForm({...form, marquee_b_seconds: Number(e.target.value)})} />
-      <NumberInput label="Glow intensity (0-1)" min={0} max={1} step={0.05} value={form.glow_intensity} onChange={e=>setForm({...form, glow_intensity: Number(e.target.value)})} />
-      <NumberInput label="Parallax intensity (px)" min={0} max={40} step={1} value={form.parallax_intensity} onChange={e=>setForm({...form, parallax_intensity: Number(e.target.value)})} />
-      <div className="md:col-span-2">
-        <button disabled={loading} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold">{loading? 'Saving…' : 'Save Settings'}</button>
-      </div>
     </form>
   )
 }

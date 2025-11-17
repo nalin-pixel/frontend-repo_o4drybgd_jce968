@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react'
-import { Menu, X, UserPlus } from 'lucide-react'
+import { Menu, X, UserPlus, LogIn, LogOut, Shield } from 'lucide-react'
 import SignUpModal from './SignUpModal'
 
 const links = [
   { label: 'About', href: '#about' },
   { label: 'Portfolio', href: '#portfolio' },
   { label: 'Contact', href: '#contact' },
-  { label: 'Admin', href: '#admin' },
 ]
+
+const API = import.meta.env.VITE_BACKEND_URL || ''
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [showSignUp, setShowSignUp] = useState(false)
+  const [user, setUser] = useState(null)
+  const [token, setToken] = useState('')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -20,10 +23,43 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    const stored = localStorage.getItem('auth')
+    if (stored) {
+      try { const parsed = JSON.parse(stored); setUser(parsed.user); setToken(parsed.token) } catch {}
+    }
+  }, [])
+
   const handleNav = (href) => {
     setOpen(false)
+    if (href === '#admin') {
+      if (!user) { alert('Please sign in first.'); return }
+      if (!(user?.is_admin && user?.is_verified)) { alert('Admin access required.'); return }
+    }
     const el = document.querySelector(href)
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const signIn = async () => {
+    const email = prompt('Email')
+    const password = email ? prompt('Password') : null
+    if (!email || !password) return
+    try {
+      const res = await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
+      if (!res.ok) { const t = await res.json().catch(()=>({detail:'Login failed'})); throw new Error(t?.detail || 'Login failed') }
+      const data = await res.json()
+      localStorage.setItem('auth', JSON.stringify(data))
+      setUser(data.user); setToken(data.token)
+      alert('Signed in')
+    } catch (e) {
+      alert(e.message)
+    }
+  }
+
+  const signOut = () => {
+    localStorage.removeItem('auth')
+    setUser(null); setToken('')
+    alert('Signed out')
   }
 
   return (
@@ -40,15 +76,43 @@ export default function Navbar() {
               {l.label}
             </button>
           ))}
-          <button onClick={()=>setShowSignUp(true)} className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium">
-            <UserPlus size={16} /> Sign up
-          </button>
+          {user?.is_admin && user?.is_verified && (
+            <button onClick={() => handleNav('#admin')} className="inline-flex items-center gap-2 text-emerald-300/90 hover:text-emerald-300">
+              <Shield size={16} /> Admin
+            </button>
+          )}
+          {!user && (
+            <>
+              <button onClick={()=>setShowSignUp(true)} className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium">
+                <UserPlus size={16} /> Sign up
+              </button>
+              <button onClick={signIn} className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium">
+                <LogIn size={16} /> Sign in
+              </button>
+            </>
+          )}
+          {user && (
+            <button onClick={signOut} className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium">
+              <LogOut size={16} /> Sign out
+            </button>
+          )}
         </nav>
 
         <div className="md:hidden flex items-center gap-3">
-          <button onClick={()=>setShowSignUp(true)} className="text-white" aria-label="Sign up">
-            <UserPlus size={20} />
-          </button>
+          {!user && (
+            <button onClick={()=>setShowSignUp(true)} className="text-white" aria-label="Sign up">
+              <UserPlus size={20} />
+            </button>
+          )}
+          {!user ? (
+            <button onClick={signIn} className="text-white" aria-label="Sign in">
+              <LogIn size={20} />
+            </button>
+          ) : (
+            <button onClick={signOut} className="text-white" aria-label="Sign out">
+              <LogOut size={20} />
+            </button>
+          )}
           <button className="text-white" onClick={() => setOpen(!open)} aria-label="Toggle menu">
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -63,9 +127,26 @@ export default function Navbar() {
                 {l.label}
               </button>
             ))}
-            <button onClick={()=>{ setShowSignUp(true); setOpen(false) }} className="py-2 text-left text-white/80 hover:text-white inline-flex items-center gap-2">
-              <UserPlus size={16} /> Sign up
-            </button>
+            {user?.is_admin && user?.is_verified && (
+              <button onClick={() => { handleNav('#admin'); setOpen(false) }} className="py-2 text-left text-emerald-300/90 hover:text-emerald-300 inline-flex items-center gap-2">
+                <Shield size={16} /> Admin
+              </button>
+            )}
+            {!user && (
+              <>
+                <button onClick={()=>{ setShowSignUp(true); setOpen(false) }} className="py-2 text-left text-white/80 hover:text-white inline-flex items-center gap-2">
+                  <UserPlus size={16} /> Sign up
+                </button>
+                <button onClick={()=>{ signIn(); setOpen(false) }} className="py-2 text-left text-white/80 hover:text-white inline-flex items-center gap-2">
+                  <LogIn size={16} /> Sign in
+                </button>
+              </>
+            )}
+            {user && (
+              <button onClick={()=>{ signOut(); setOpen(false) }} className="py-2 text-left text-white/80 hover:text-white inline-flex items-center gap-2">
+                <LogOut size={16} /> Sign out
+              </button>
+            )}
           </div>
         </div>
       )}
