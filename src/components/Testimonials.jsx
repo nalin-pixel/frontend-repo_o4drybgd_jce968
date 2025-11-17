@@ -169,6 +169,17 @@ export default function Testimonials() {
   const loopA = useMemo(() => Array.from({ length: 4 }).flatMap(() => base), [base])
   const loopB = useMemo(() => Array.from({ length: 4 }).flatMap(() => [...base].reverse()), [base])
 
+  const handleAddClick = () => {
+    // Simple anchor navigation to admin section where testimonials can be added
+    const el = document.querySelector('#admin')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      // fallback to hash navigation
+      window.location.hash = 'admin'
+    }
+  }
+
   return (
     <section className="relative bg-[#040a19] text-white py-20 overflow-hidden">
       {/* torn lights */}
@@ -206,6 +217,16 @@ export default function Testimonials() {
             </div>
           </div>
         )}
+
+        {/* Add Testimonials CTA */}
+        <div className="mt-10 flex items-center justify-center">
+          <button
+            onClick={handleAddClick}
+            className="px-5 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/40 text-sm font-medium transition-colors"
+          >
+            Add testimonials
+          </button>
+        </div>
       </div>
 
       <style>{`
