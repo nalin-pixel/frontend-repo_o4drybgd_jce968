@@ -4,25 +4,20 @@ import HyperdriveBackground from './HyperdriveBackground'
 
 const RESUME_URL = import.meta.env.VITE_RESUME_URL || '/resume.pdf'
 
-// Fallback mapping by stable identifiers from Spline events (only the intended three keys)
+// Only keep the ESC/Resume key interactive; ignore others
 const FALLBACK_ID_MAP = {
-  '82a8c17a-395f-40a4-b63d-09d1b86a8818': 'work', // Key YOU
+  // 'YOU' and 'SEND' intentionally removed
   'a5c5d194-53e6-4206-ac02-5000aa34f6e0': 'resume', // Key Esc
-  '85e2fbad-9b63-4f63-824f-056102ee7f1c': 'contact', // Key Send
 }
 
-// Explicit name mapping when Spline exposes non-semantic names
+// Explicit name mapping kept only for the Resume key
 const NAME_MAP = {
-  'key you': 'work',
   'key esc': 'resume',
-  'key send': 'contact',
 }
 
 function extractTargetInfo(evt) {
-  // Try common places Spline exposes a target
   const tgt = evt?.target || evt?.object || evt?.detail?.target || null
   const name = evt?.name || tgt?.name || ''
-  // Probe likely id fields
   const id = evt?.id || tgt?.id || tgt?.uuid || tgt?.nodeId || tgt?.refId || ''
   const type = tgt?.type || tgt?.className || ''
   const pointer = {
@@ -43,23 +38,17 @@ export default function Hero() {
   const handleAction = (label) => {
     const n = (label || '').toLowerCase()
     if (!n) return false
-    if (n.includes('work')) {
-      goTo('portfolio')
-      return true
-    }
-    // Resume key routes to Contact section per request
+
+    // Keep only resume key behavior; others do nothing
     if (n.includes('resume')) {
+      // Keep existing behavior: route to Contact section
       goTo('contact')
       return true
     }
-    if (n.includes('contact')) {
-      goTo('contact')
-      return true
-    }
+
     return false
   }
 
-  // Central click handler: only respond to known ids or exact mapped names
   const onAnySplineEvent = (evt) => {
     const info = extractTargetInfo(evt)
     // eslint-disable-next-line no-console
@@ -84,7 +73,7 @@ export default function Hero() {
       return
     }
 
-    // 3) Otherwise ignore to avoid accidental routes (e.g., other keys like "I")
+    // 3) Ignore all other keys/objects
     // eslint-disable-next-line no-console
     console.debug('[Spline] ignored interaction (unmapped object):', info.name, info.id)
   }
@@ -141,7 +130,7 @@ export default function Hero() {
             Blending cybersecurity, product design, and digital marketing into impactful experiences.
           </p>
 
-          {/* Removed extra CTA buttons so the 3D keys are the only interactive entry points */}
+          {/* Keep other CTAs removed; only the 3D Resume key scrolls to Contact */}
         </div>
 
         <div className="w-full lg:w-1/2" />
