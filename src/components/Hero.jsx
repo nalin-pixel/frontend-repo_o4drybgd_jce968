@@ -1,9 +1,43 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Spline from '@splinetool/react-spline'
 import HyperdriveBackground from './HyperdriveBackground'
 
+const RESUME_URL = import.meta.env.VITE_RESUME_URL || '/resume.pdf'
+
 export default function Hero() {
   const [open, setOpen] = useState(false)
+
+  const goTo = (id) => {
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleAction = (label) => {
+    const n = (label || '').toLowerCase()
+    if (n.includes('work')) {
+      goTo('portfolio')
+    } else if (n.includes('resume')) {
+      window.open(RESUME_URL, '_blank', 'noopener,noreferrer')
+    } else if (n.includes('hire') || n.includes('contact')) {
+      goTo('contact')
+    }
+  }
+
+  const onSplineLoad = (spline) => {
+    try {
+      spline.addEventListener('mouseDown', (e) => {
+        const name = e?.target?.name || ''
+        handleAction(name)
+      })
+      // Optional: also react to "mouseUp" if your scene emits on release instead of press
+      spline.addEventListener?.('mouseUp', (e) => {
+        const name = e?.target?.name || ''
+        handleAction(name)
+      })
+    } catch (e) {
+      // fail silently if events are not available
+    }
+  }
 
   return (
     <section id="about" className="relative min-h-[90vh] w-full overflow-hidden bg-[#050b1b]">
@@ -14,7 +48,7 @@ export default function Hero() {
 
       {/* 3D scene */}
       <div className="absolute inset-0 mix-blend-screen opacity-[0.92]">
-        <Spline scene="https://prod.spline.design/VJLoxp84lCdVfdZu/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+        <Spline scene="https://prod.spline.design/VJLoxp84lCdVfdZu/scene.splinecode" style={{ width: '100%', height: '100%' }} onLoad={onSplineLoad} />
       </div>
 
       {/* dark gradient veil */}
@@ -27,10 +61,14 @@ export default function Hero() {
             Blending cybersecurity, product design, and digital marketing into impactful experiences.
           </p>
 
-          <div className="mt-6">
+          <div className="mt-6 flex items-center gap-3">
             <button onClick={() => setOpen(!open)} className="relative inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:shadow-[0_0_30px_rgba(255,255,255,0.35)] hover:border-white/60 border border-transparent transition-all">
               {open ? 'Hide details' : 'View more'}
             </button>
+            {/* Fallback buttons mirroring 3D actions for accessibility */}
+            <button onClick={() => handleAction('works')} className="inline-flex rounded-full px-4 py-2 text-xs border border-white/20 hover:border-white/60 bg-white/5">Works</button>
+            <button onClick={() => handleAction('resume')} className="inline-flex rounded-full px-4 py-2 text-xs border border-white/20 hover:border-white/60 bg-white/5">Resume</button>
+            <button onClick={() => handleAction('hire me')} className="inline-flex rounded-full px-4 py-2 text-xs border border-white/20 hover:border-white/60 bg-white/5">Hire me</button>
           </div>
 
           {open && (
