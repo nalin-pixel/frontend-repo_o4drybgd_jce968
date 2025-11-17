@@ -11,6 +11,15 @@ function TextInput({ label, ...props }) {
   )
 }
 
+function NumberInput({ label, ...props }) {
+  return (
+    <label className="block">
+      <span className="text-sm text-white/70">{label}</span>
+      <input type="number" step="0.1" {...props} className="mt-1 w-full rounded-md bg-[#0b1633] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    </label>
+  )
+}
+
 function TextArea({ label, ...props }) {
   return (
     <label className="block">
@@ -30,19 +39,25 @@ export default function AdminPanel() {
   const [clients, setClients] = useState([])
   const [projects, setProjects] = useState([])
   const [testimonials, setTestimonials] = useState([])
+  const [settings, setSettings] = useState({ key: 'ui', marquee_a_seconds: 30, marquee_b_seconds: 28, glow_intensity: 0.25, parallax_intensity: 8 })
 
   const fetchAll = async () => {
     try {
-      const [c1, c2, c3, c4] = await Promise.all([
+      const [c1, c2, c3, c4, s1] = await Promise.all([
         fetch(`${API}/api/categories`).then(r => r.json()),
         fetch(`${API}/api/clients`).then(r => r.json()),
         fetch(`${API}/api/projects`).then(r => r.json()),
         fetch(`${API}/api/testimonials`).then(r => r.json()),
+        fetch(`${API}/api/settings`).then(r => r.json()),
       ])
       setCategories(c1)
       setClients(c2)
       setProjects(c3)
       setTestimonials(c4)
+      if (s1 && s1.key) setSettings(prev => ({
+        ...prev,
+        ...s1,
+      }))
     } catch (e) {
       console.error(e)
       setMessage('Failed to load data')
@@ -90,14 +105,55 @@ export default function AdminPanel() {
     } catch (e) { setMessage('Error: ' + e.message) } finally { setLoading(false) }
   }
 
+  const seed = async () => {
+    setLoading(true)
+    setMessage('')
+    try {
+      const res = await fetch(`${API}/api/seed`, { method: 'POST' })
+      if (!res.ok) throw new Error('Seeding failed')
+      await fetchAll()
+      setMessage('Sample data loaded')
+    } catch (e) {
+      setMessage('Error: ' + e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const saveSettings = async (payload) => {
+    setLoading(true)
+    setMessage('')
+    try {
+      // create if none, else update by id
+      if (!settings?.id) {
+        const res = await fetch(`${API}/api/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        if (!res.ok) throw new Error('Save failed')
+      } else {
+        const res = await fetch(`${API}/api/settings/${settings.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        if (!res.ok) throw new Error('Update failed')
+      }
+      await fetchAll()
+      setMessage('Settings saved')
+    } catch (e) {
+      setMessage('Error: ' + e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <section className="min-h-screen bg-[#050b1b] text-white">
       <div className="max-w-6xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold">Admin CMS</h1>
-        <p className="text-white/60 mt-1">Manage categories, clients, projects, and testimonials.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Admin CMS</h1>
+            <p className="text-white/60 mt-1">Manage categories, clients, projects, testimonials, and UI settings.</p>
+          </div>
+          <button onClick={seed} disabled={loading} className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold hover:bg-emerald-500">{loading ? 'Working…' : 'Preload sample data'}</button>
+        </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {['categories','clients','projects','testimonials'].map(t => (
+          {['categories','clients','projects','testimonials','settings'].map(t => (
             <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-1.5 text-sm border ${tab===t? 'border-white/60 bg-white/10' : 'border-white/10 bg-white/5'}`}>{t}</button>
           ))}
         </div>
@@ -127,7 +183,7 @@ export default function AdminPanel() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <h2 className="font-semibold mb-3">Existing</h2>
-              <List items={clients} fields={[['name'],['category_key'],['description']]} onUpdate={(id, data)=>update('clients',id,data)} onDelete={(id)=>removeItem('clients',id)} />
+              <List items={clients} fields={[['name'],['category_key'],['description'],['logo_url']]} onUpdate={(id, data)=>update('clients',id,data)} onDelete={(id)=>removeItem('clients',id)} />
             </div>
           </div>
         )}
@@ -155,7 +211,17 @@ export default function AdminPanel() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <h2 className="font-semibold mb-3">Existing</h2>
-              <List items={testimonials} fields={[['name'],['role'],['quote']]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
+              <List items={testimonials} fields={[['name'],['role'],['company'],['rating'],['quote']]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
+            </div>
+          </div>
+        )}
+
+        {/* Settings */}
+        {tab==='settings' && (
+          <div className="mt-8 grid gap-8">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+              <h2 className="font-semibold mb-4">UI & Animation Settings</h2>
+              <SettingsForm initial={settings} onSave={saveSettings} loading={loading} />
             </div>
           </div>
         )}
@@ -217,13 +283,31 @@ function ProjectForm({ onSubmit, loading, clients }) {
 }
 
 function TestimonialForm({ onSubmit, loading }) {
-  const [form, setForm] = useState({ name: '', role: '', quote: '' })
+  const [form, setForm] = useState({ name: '', role: '', company: '', rating: 5, quote: '' })
   return (
     <form onSubmit={(e)=>{e.preventDefault(); onSubmit(form);}} className="space-y-3">
       <TextInput label="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required />
       <TextInput label="Role" value={form.role} onChange={e=>setForm({...form, role:e.target.value})} />
+      <TextInput label="Company" value={form.company} onChange={e=>setForm({...form, company:e.target.value})} />
+      <NumberInput label="Rating (0-5)" min={0} max={5} step={1} value={form.rating} onChange={e=>setForm({...form, rating: Number(e.target.value)})} />
       <TextArea label="Quote" rows={3} value={form.quote} onChange={e=>setForm({...form, quote:e.target.value})} required />
       <button disabled={loading} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold">{loading? 'Saving...' : 'Save'}</button>
+    </form>
+  )
+}
+
+function SettingsForm({ initial, onSave, loading }) {
+  const [form, setForm] = useState(initial)
+  useEffect(() => { setForm(initial) }, [initial])
+  return (
+    <form onSubmit={(e)=>{e.preventDefault(); onSave(form)}} className="grid md:grid-cols-2 gap-4">
+      <NumberInput label="Marquee A seconds" min={5} max={120} step={0.5} value={form.marquee_a_seconds} onChange={e=>setForm({...form, marquee_a_seconds: Number(e.target.value)})} />
+      <NumberInput label="Marquee B seconds" min={5} max={120} step={0.5} value={form.marquee_b_seconds} onChange={e=>setForm({...form, marquee_b_seconds: Number(e.target.value)})} />
+      <NumberInput label="Glow intensity (0-1)" min={0} max={1} step={0.05} value={form.glow_intensity} onChange={e=>setForm({...form, glow_intensity: Number(e.target.value)})} />
+      <NumberInput label="Parallax intensity (px)" min={0} max={40} step={1} value={form.parallax_intensity} onChange={e=>setForm({...form, parallax_intensity: Number(e.target.value)})} />
+      <div className="md:col-span-2">
+        <button disabled={loading} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold">{loading? 'Saving…' : 'Save Settings'}</button>
+      </div>
     </form>
   )
 }

@@ -44,15 +44,28 @@ function LogoBadge({ name, logo }) {
   )
 }
 
-function TestimonialCard({ t }) {
+function TestimonialCard({ t, parallaxIntensity = 8, glowIntensity = 0.25 }) {
   const widthClass = sizeClassForQuote(t.quote)
+  // parallax drift using pointer position
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  useEffect(() => {
+    const onMove = (e) => {
+      const px = ((e.clientX / window.innerWidth) - 0.5) * 2
+      const py = ((e.clientY / window.innerHeight) - 0.5) * 2
+      setOffset({ x: px * parallaxIntensity, y: py * parallaxIntensity })
+    }
+    window.addEventListener('mousemove', onMove)
+    return () => window.removeEventListener('mousemove', onMove)
+  }, [parallaxIntensity])
+
   return (
     <div
       className={`${widthClass} group relative rounded-2xl border border-white/10 bg-white/5 p-6 md:p-7 backdrop-blur transition-all h-auto hover:border-white/60`}
+      style={{ transform: `translate3d(${offset.x}px, ${offset.y}px, 0)` }}
     >
       {/* subtle glass border pulse on hover */}
       <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="absolute inset-0 rounded-2xl ring-1 ring-white/30 shadow-[0_0_25px_rgba(255,255,255,0.25)_inset] animate-none group-hover:animate-glassPulse" />
+        <div className="absolute inset-0 rounded-2xl ring-1 ring-white/30" style={{ boxShadow: `inset 0 0 25px rgba(255,255,255,${glowIntensity})` }} />
       </div>
       <Stars count={t.rating} />
       <p className="mt-3 text-white/80 whitespace-normal break-words leading-relaxed text-base md:text-lg">“{t.quote}”</p>
@@ -70,14 +83,16 @@ function TestimonialCard({ t }) {
 export default function Testimonials() {
   const [dualRow, setDualRow] = useState(true)
   const [data, setData] = useState([])
+  const [settings, setSettings] = useState({ marquee_a_seconds: 30, marquee_b_seconds: 28, glow_intensity: 0.25, parallax_intensity: 8 })
 
   useEffect(() => {
     let mounted = true
     const load = async () => {
       try {
-        const [tRes, cRes] = await Promise.all([
+        const [tRes, cRes, sRes] = await Promise.all([
           fetch(`${API}/api/testimonials`).then(r => r.json()),
           fetch(`${API}/api/clients`).then(r => r.json()),
+          fetch(`${API}/api/settings`).then(r => r.json()),
         ])
         if (!mounted) return
         const logoByCompany = Object.fromEntries(
@@ -87,7 +102,6 @@ export default function Testimonials() {
           ...t,
           logo: t.logo_url || logoByCompany[t.company] || '',
         }))
-        // Fallback to local sample if none in CMS
         if (merged.length === 0) {
           const samples = [
             { name: 'A. Santoso', role: 'Product Manager, Fintech', company: 'VoltPay', rating: 5, quote: 'Raffi quickly translated complex requirements into clean, intuitive flows. The sprint velocity went up 20%.' },
@@ -100,12 +114,21 @@ export default function Testimonials() {
         } else {
           setData(merged)
         }
+        if (sRes && sRes.key) {
+          setSettings(prev => ({
+            ...prev,
+            marquee_a_seconds: sRes.marquee_a_seconds ?? prev.marquee_a_seconds,
+            marquee_b_seconds: sRes.marquee_b_seconds ?? prev.marquee_b_seconds,
+            glow_intensity: sRes.glow_intensity ?? prev.glow_intensity,
+            parallax_intensity: sRes.parallax_intensity ?? prev.parallax_intensity,
+          }))
+        }
       } catch (e) {
         console.error(e)
       }
     }
     load()
-    return () => { mounted = False }
+    return () => { mounted = false }
   }, [])
 
   const base = useMemo(() => data, [data])
@@ -117,7 +140,7 @@ export default function Testimonials() {
       {/* torn lights */}
       <div className="pointer-events-none absolute inset-0 opacity-40">
         <div className="absolute -top-10 -left-32 h-1 w-[120%] rotate-[12deg] bg-gradient-to-r from-transparent via-white/60 to-transparent animate-flicker"/>
-        <div className="absolute top-10 -right-40 h-1 w-[120%] -rotate-[8deg] bg-gradient-to-r from-transparent via-white/40 to-transparent animate-flicker-delayed"/>
+        <div className="absolute top-10 -right-40 h-1 w-[120%] -rotate-[-8deg] bg-gradient-to-r from-transparent via-white/40 to-transparent animate-flicker-delayed"/>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -132,9 +155,9 @@ export default function Testimonials() {
 
         {/* Row 1 */}
         <div className="mt-8 relative overflow-hidden">
-          <div className="flex gap-6 whitespace-nowrap will-change-transform animate-marquee items-stretch">
+          <div className="flex gap-6 whitespace-nowrap will-change-transform items-stretch" style={{ animation: `marquee ${settings.marquee_a_seconds || 30}s linear infinite`, width: '200%' }}>
             {loopA.map((t, idx) => (
-              <TestimonialCard key={`a-${idx}`} t={t} />
+              <TestimonialCard key={`a-${idx}`} t={t} parallaxIntensity={settings.parallax_intensity} glowIntensity={settings.glow_intensity} />
             ))}
           </div>
         </div>
@@ -142,9 +165,9 @@ export default function Testimonials() {
         {/* Row 2 (appears on md+), reverse direction; toggle-able */}
         {dualRow && (
           <div className="mt-6 relative overflow-hidden hidden md:block">
-            <div className="flex gap-6 whitespace-nowrap will-change-transform animate-marquee-reverse items-stretch">
+            <div className="flex gap-6 whitespace-nowrap will-change-transform items-stretch" style={{ animation: `marquee-reverse ${settings.marquee_b_seconds || 28}s linear infinite`, width: '200%' }}>
               {loopB.map((t, idx) => (
-                <TestimonialCard key={`b-${idx}`} t={t} />
+                <TestimonialCard key={`b-${idx}`} t={t} parallaxIntensity={settings.parallax_intensity} glowIntensity={settings.glow_intensity} />
               ))}
             </div>
           </div>
@@ -160,13 +183,9 @@ export default function Testimonials() {
           0% { transform: translateX(-50%); }
           100% { transform: translateX(0); }
         }
-        .animate-marquee { animation: marquee 30s linear infinite; width: 200%; }
-        .animate-marquee-reverse { animation: marquee-reverse 28s linear infinite; width: 200%; }
         @keyframes flicker { 0%, 100% { opacity: .9 } 50% { opacity: .4 } }
         .animate-flicker { animation: flicker 5s ease-in-out infinite; }
         .animate-flicker-delayed { animation: flicker 6.5s ease-in-out infinite; }
-        @keyframes glassPulse { 0% { box-shadow: 0 0 0 rgba(255,255,255,0.0) inset } 50% { box-shadow: 0 0 24px rgba(255,255,255,0.25) inset } 100% { box-shadow: 0 0 0 rgba(255,255,255,0.0) inset } }
-        .animate-glassPulse { animation: glassPulse 1.6s ease-in-out infinite; }
       `}</style>
     </section>
   )
