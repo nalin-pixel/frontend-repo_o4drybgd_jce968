@@ -81,10 +81,6 @@ export default function Hero() {
             <button onClick={() => setOpen(!open)} className="relative inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:shadow-[0_0_30px_rgba(255,255,255,0.35)] hover:border-white/60 border border-transparent transition-all">
               {open ? 'Hide details' : 'View more'}
             </button>
-            {/* Fallback buttons mirroring 3D actions for accessibility */}
-            <button onClick={() => handleAction('works')} className="inline-flex rounded-full px-4 py-2 text-xs border border-white/20 hover:border-white/60 bg-white/5">Works</button>
-            <button onClick={() => handleAction('resume')} className="inline-flex rounded-full px-4 py-2 text-xs border border-white/20 hover:border-white/60 bg-white/5">Resume</button>
-            <button onClick={() => handleAction('hire me')} className="inline-flex rounded-full px-4 py-2 text-xs border border-white/20 hover:border-white/60 bg-white/5">Hire me</button>
           </div>
 
           {open && (
