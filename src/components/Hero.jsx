@@ -38,6 +38,8 @@ export default function Hero() {
 
   const onSplineLoad = (spline) => {
     try {
+      // eslint-disable-next-line no-console
+      console.debug('[Spline] loaded scene and attaching listeners')
       spline.addEventListener?.('mouseDown', (e) => {
         const name = e?.target?.name || ''
         handleAction(name)
@@ -59,8 +61,14 @@ export default function Hero() {
         handleAction(name)
       })
     } catch (e) {
-      // ignore if events aren't available
+      // eslint-disable-next-line no-console
+      console.debug('[Spline] runtime listeners unavailable', e)
     }
+  }
+
+  const onSplineError = (e) => {
+    // eslint-disable-next-line no-console
+    console.error('[Spline] failed to load scene', e)
   }
 
   return (
@@ -71,11 +79,12 @@ export default function Hero() {
       </div>
 
       {/* 3D scene */}
-      <div className="absolute inset-0 mix-blend-screen opacity-[0.92] pointer-events-auto">
+      <div className="absolute inset-0 mix-blend-screen opacity-[0.92] pointer-events-auto z-0">
         <Spline
           scene="https://prod.spline.design/VJLoxp84lCdVfdZu/scene.splinecode"
           style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}
           onLoad={onSplineLoad}
+          onError={onSplineError}
           onMouseDown={handleSplineEvent}
           onMouseUp={handleSplineEvent}
           onClick={handleSplineEvent}
@@ -87,9 +96,9 @@ export default function Hero() {
       </div>
 
       {/* dark gradient veil (non-interactive) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#050b1b]/40 via-[#050b1b]/60 to-[#050b1b] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050b1b]/40 via-[#050b1b]/60 to-[#050b1b] pointer-events-none z-10" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex flex-col lg:flex-row items-center gap-10 pointer-events-none">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex flex-col lg:flex-row items-center gap-10 pointer-events-none">
         <div className="w-full lg:w-1/2 text-white">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">Raffi Alvriansyah</h1>
           <p className="mt-4 text-lg text-white/80">
@@ -115,7 +124,7 @@ export default function Hero() {
       </div>
 
       {/* Animated white strip + torn lights */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-10">
         {[...Array(6)].map((_, i) => (
           <span
             key={i}
