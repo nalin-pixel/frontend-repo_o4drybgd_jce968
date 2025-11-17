@@ -141,19 +141,7 @@ export default function Hero() {
             Blending cybersecurity, product design, and digital marketing into impactful experiences.
           </p>
 
-          <div className="mt-6 flex items-center gap-3 pointer-events-auto">
-            <button onClick={() => setOpen(!open)} className="relative inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:shadow-[0_0_30px_rgba(255,255,255,0.35)] hover:border-white/60 border border-transparent transition-all">
-              {open ? 'Hide details' : 'View more'}
-            </button>
-          </div>
-
-          {open && (
-            <div className="mt-4 overflow-hidden">
-              <p className="text-white/80">
-                IT professional with dual degrees in Information Systems and Management, pursuing a Master's in Cybersecurity at Monash University. Experienced in UI/UX design, cybersecurity analysis, and Agile project coordination. Proficient in Figma, Trello, and SIEM platforms.
-              </p>
-            </div>
-          )}
+          {/* Removed extra CTA buttons so the 3D keys are the only interactive entry points */}
         </div>
 
         <div className="w-full lg:w-1/2" />
