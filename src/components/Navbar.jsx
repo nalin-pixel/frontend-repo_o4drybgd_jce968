@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Menu, X, UserPlus, LogIn, LogOut, Shield } from 'lucide-react'
 import SignUpModal from './SignUpModal'
+import SignInModal from './SignInModal'
 
 const links = [
   { label: 'About', href: '#about' },
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [showSignUp, setShowSignUp] = useState(false)
+  const [showSignIn, setShowSignIn] = useState(false)
   const [user, setUser] = useState(null)
   const [token, setToken] = useState('')
 
@@ -24,10 +26,20 @@ export default function Navbar() {
   }, [])
 
   useEffect(() => {
-    const stored = localStorage.getItem('auth')
-    if (stored) {
-      try { const parsed = JSON.parse(stored); setUser(parsed.user); setToken(parsed.token) } catch {}
+    const load = () => {
+      const stored = localStorage.getItem('auth')
+      if (stored) {
+        try { const parsed = JSON.parse(stored); setUser(parsed.user); setToken(parsed.token) } catch {}
+      } else {
+        setUser(null); setToken('')
+      }
     }
+    load()
+    const onStorage = (e) => { if (e.key === 'auth') load() }
+    window.addEventListener('storage', onStorage)
+    const onAuthChanged = () => load()
+    window.addEventListener('auth-changed', onAuthChanged)
+    return () => { window.removeEventListener('storage', onStorage); window.removeEventListener('auth-changed', onAuthChanged) }
   }, [])
 
   const handleNav = (href) => {
@@ -40,26 +52,14 @@ export default function Navbar() {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const signIn = async () => {
-    const email = prompt('Email')
-    const password = email ? prompt('Password') : null
-    if (!email || !password) return
-    try {
-      const res = await fetch(`${API}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
-      if (!res.ok) { const t = await res.json().catch(()=>({detail:'Login failed'})); throw new Error(t?.detail || 'Login failed') }
-      const data = await res.json()
-      localStorage.setItem('auth', JSON.stringify(data))
-      setUser(data.user); setToken(data.token)
-      alert('Signed in')
-    } catch (e) {
-      alert(e.message)
-    }
+  const signInPrompt = () => {
+    setShowSignIn(true)
   }
 
   const signOut = () => {
     localStorage.removeItem('auth')
     setUser(null); setToken('')
-    alert('Signed out')
+    window.dispatchEvent(new CustomEvent('auth-changed'))
   }
 
   return (
@@ -86,7 +86,7 @@ export default function Navbar() {
               <button onClick={()=>setShowSignUp(true)} className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium">
                 <UserPlus size={16} /> Sign up
               </button>
-              <button onClick={signIn} className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium">
+              <button onClick={signInPrompt} className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium">
                 <LogIn size={16} /> Sign in
               </button>
             </>
@@ -105,7 +105,7 @@ export default function Navbar() {
             </button>
           )}
           {!user ? (
-            <button onClick={signIn} className="text-white" aria-label="Sign in">
+            <button onClick={signInPrompt} className="text-white" aria-label="Sign in">
               <LogIn size={20} />
             </button>
           ) : (
@@ -137,7 +137,7 @@ export default function Navbar() {
                 <button onClick={()=>{ setShowSignUp(true); setOpen(false) }} className="py-2 text-left text-white/80 hover:text-white inline-flex items-center gap-2">
                   <UserPlus size={16} /> Sign up
                 </button>
-                <button onClick={()=>{ signIn(); setOpen(false) }} className="py-2 text-left text-white/80 hover:text-white inline-flex items-center gap-2">
+                <button onClick={()=>{ setShowSignIn(true); setOpen(false) }} className="py-2 text-left text-white/80 hover:text-white inline-flex items-center gap-2">
                   <LogIn size={16} /> Sign in
                 </button>
               </>
@@ -151,6 +151,7 @@ export default function Navbar() {
         </div>
       )}
       <SignUpModal open={showSignUp} onClose={()=>setShowSignUp(false)} />
+      <SignInModal open={showSignIn} onClose={()=>setShowSignIn(false)} onSuccess={(data)=>{ setUser(data.user); setToken(data.token) }} />
     </header>
   )
 }
