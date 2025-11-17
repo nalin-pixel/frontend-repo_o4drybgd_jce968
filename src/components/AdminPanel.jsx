@@ -335,6 +335,11 @@ export default function AdminPanel() {
               <h2 className="font-semibold mb-4">UI & Animation Settings</h2>
               <SettingsForm initial={settings} onSave={saveSettings} loading={loading} />
             </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+              <h2 className="font-semibold mb-4">Resume PDF</h2>
+              <ResumeUploader authToken={authToken} />
+            </div>
           </div>
         )}
       </div>
@@ -449,6 +454,76 @@ function List({ items, fields, onUpdate, onDelete }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+function ResumeUploader({ authToken }) {
+  const [status, setStatus] = useState({ exists: false, url: null, updated_at: null })
+  const [busy, setBusy] = useState(false)
+  const fullUrl = status?.url ? `${API}${status.url}` : null
+
+  const load = async () => {
+    try {
+      const res = await fetch(`${API}/api/admin/resume`, { headers: { ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) } })
+      if (res.ok) {
+        const j = await res.json()
+        setStatus(j)
+      }
+    } catch {}
+  }
+
+  useEffect(() => { load() }, [])
+
+  const onSelect = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.type !== 'application/pdf') {
+      alert('Please select a PDF file')
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      alert('File too large (max 8MB)')
+      return
+    }
+    const fd = new FormData()
+    fd.append('file', file)
+    setBusy(true)
+    try {
+      const res = await fetch(`${API}/api/admin/resume`, { method: 'POST', headers: { ...(authToken? { Authorization: `Bearer ${authToken}` } : {}) }, body: fd })
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({ detail: 'Upload failed' }))
+        throw new Error(err?.detail || 'Upload failed')
+      }
+      const j = await res.json()
+      setStatus(j)
+    } catch (e) {
+      alert(e.message)
+    } finally {
+      setBusy(false)
+      e.target.value = ''
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm text-white/70">Upload a PDF for your resume. Max 8MB. It will be served at a public link.</div>
+      <div className="flex items-center gap-3">
+        <label className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm cursor-pointer hover:bg-white/15">
+          <input type="file" accept="application/pdf" onChange={onSelect} className="hidden" />
+          <span>{busy ? 'Uploading…' : 'Choose PDF'}</span>
+        </label>
+        {status?.exists && fullUrl && (
+          <a href={fullUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-300 underline">View current resume</a>
+        )}
+      </div>
+      {status?.exists && fullUrl && (
+        <div className="text-xs text-white/60">
+          Public URL: <code className="text-white/80">{fullUrl}</code>
+          <div className="mt-1">Tip: set VITE_RESUME_URL to this link to use it across the site.</div>
+          {status.updated_at && <div className="mt-1">Updated: {new Date(status.updated_at).toLocaleString?.() || status.updated_at}</div>}
+        </div>
+      )}
     </div>
   )
 }
