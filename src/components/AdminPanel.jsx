@@ -458,6 +458,50 @@ function List({ items, fields, onUpdate, onDelete }) {
   )
 }
 
+function SettingsForm({ initial, onSave, loading }) {
+  const [form, setForm] = useState(() => ({
+    key: initial?.key || 'ui',
+    marquee_a_seconds: initial?.marquee_a_seconds ?? 30,
+    marquee_b_seconds: initial?.marquee_b_seconds ?? 28,
+    glow_intensity: initial?.glow_intensity ?? 0.25,
+    parallax_intensity: initial?.parallax_intensity ?? 8,
+  }))
+
+  useEffect(() => {
+    setForm({
+      key: initial?.key || 'ui',
+      marquee_a_seconds: initial?.marquee_a_seconds ?? 30,
+      marquee_b_seconds: initial?.marquee_b_seconds ?? 28,
+      glow_intensity: initial?.glow_intensity ?? 0.25,
+      parallax_intensity: initial?.parallax_intensity ?? 8,
+    })
+  }, [initial])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const payload = {
+      ...form,
+      marquee_a_seconds: Number(form.marquee_a_seconds),
+      marquee_b_seconds: Number(form.marquee_b_seconds),
+      glow_intensity: Number(form.glow_intensity),
+      parallax_intensity: Number(form.parallax_intensity),
+    }
+    onSave(payload)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid md:grid-cols-2 gap-4">
+        <NumberInput label="Marquee A Speed (seconds)" min={5} max={120} step={1} value={form.marquee_a_seconds} onChange={e=>setForm(f=>({...f, marquee_a_seconds: e.target.value}))} />
+        <NumberInput label="Marquee B Speed (seconds)" min={5} max={120} step={1} value={form.marquee_b_seconds} onChange={e=>setForm(f=>({...f, marquee_b_seconds: e.target.value}))} />
+        <NumberInput label="Glow Intensity" min={0} max={1} step={0.05} value={form.glow_intensity} onChange={e=>setForm(f=>({...f, glow_intensity: e.target.value}))} />
+        <NumberInput label="Parallax Intensity" min={0} max={30} step={1} value={form.parallax_intensity} onChange={e=>setForm(f=>({...f, parallax_intensity: e.target.value}))} />
+      </div>
+      <button disabled={loading} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold">{loading? 'Saving…' : 'Save Settings'}</button>
+    </form>
+  )
+}
+
 function ResumeUploader({ authToken }) {
   const [status, setStatus] = useState({ exists: false, url: null, updated_at: null })
   const [busy, setBusy] = useState(false)
