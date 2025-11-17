@@ -4,7 +4,7 @@ import HyperdriveBackground from './HyperdriveBackground'
 
 const RESUME_URL = import.meta.env.VITE_RESUME_URL || '/resume.pdf'
 
-// Fallback mapping by stable identifiers from Spline events
+// Fallback mapping by stable identifiers from Spline events (only the intended three keys)
 const FALLBACK_ID_MAP = {
   '82a8c17a-395f-40a4-b63d-09d1b86a8818': 'work', // Key YOU
   'a5c5d194-53e6-4206-ac02-5000aa34f6e0': 'resume', // Key Esc
@@ -47,25 +47,25 @@ export default function Hero() {
       goTo('portfolio')
       return true
     }
-    // Change: pressing the Resume key routes to Contact section
+    // Resume key routes to Contact section per request
     if (n.includes('resume')) {
       goTo('contact')
       return true
     }
-    if (n.includes('hire') || n.includes('contact')) {
+    if (n.includes('contact')) {
       goTo('contact')
       return true
     }
     return false
   }
 
-  // Central click handler: prefer id map, then explicit name map, then keyword heuristics
+  // Central click handler: only respond to known ids or exact mapped names
   const onAnySplineEvent = (evt) => {
     const info = extractTargetInfo(evt)
     // eslint-disable-next-line no-console
     console.debug('[Spline interaction raw event]', info)
 
-    // 1) ID mapping has top priority (works even when name is present but non-semantic)
+    // 1) ID mapping has top priority
     if (info.id && FALLBACK_ID_MAP[info.id]) {
       const mapped = FALLBACK_ID_MAP[info.id]
       // eslint-disable-next-line no-console
@@ -74,7 +74,7 @@ export default function Hero() {
       return
     }
 
-    // 2) Explicit name mapping
+    // 2) Explicit name mapping (exact match only)
     const lowerName = (info.name || '').toLowerCase()
     if (lowerName && NAME_MAP[lowerName]) {
       const mapped = NAME_MAP[lowerName]
@@ -84,15 +84,9 @@ export default function Hero() {
       return
     }
 
-    // 3) Heuristic keywords in name
-    if (info.name) {
-      const ok = handleAction(info.name)
-      if (ok) return
-    }
-
-    // 4) No route found — log hint
+    // 3) Otherwise ignore to avoid accidental routes (e.g., other keys like "I")
     // eslint-disable-next-line no-console
-    console.debug('[Spline] no route matched for event; name/id seen:', info.name, info.id)
+    console.debug('[Spline] ignored interaction (unmapped object):', info.name, info.id)
   }
 
   const onSplineLoad = (spline) => {
