@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Mail, Linkedin, Instagram, FileText } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL || ''
 const RESUME_URL = import.meta.env.VITE_RESUME_URL || '/resume.pdf'
@@ -59,10 +60,30 @@ export default function Contact() {
             <h3 className="text-xl font-semibold">Prefer direct contact?</h3>
             <p className="mt-2 text-sm text-white/70">Reach me instantly via any of these.</p>
             <div className="mt-4 space-y-3">
-              <a href="mailto:raffi@example.com" className="block rounded-md border border-white/10 bg-[#0b1633] px-4 py-2 hover:border-white/40 hover:bg-[#10204a] transition-colors">Email</a>
-              <a href="https://www.linkedin.com/in/raffi" target="_blank" rel="noreferrer" className="block rounded-md border border-white/10 bg-[#0b1633] px-4 py-2 hover:border-white/40 hover:bg-[#10204a] transition-colors">LinkedIn</a>
-              <a href="https://www.instagram.com/raffi" target="_blank" rel="noreferrer" className="block rounded-md border border-white/10 bg-[#0b1633] px-4 py-2 hover:border-white/40 hover:bg-[#10204a] transition-colors">Instagram</a>
-              <a href={RESUME_URL} target="_blank" rel="noreferrer" className="block rounded-md border border-white/10 bg-blue-600/90 px-4 py-2 text-white hover:bg-blue-600 transition-colors">Resume</a>
+              <a href="mailto:raffi@example.com" className="group flex items-center gap-3 rounded-md border border-white/10 bg-[#0b1633] px-4 py-2 hover:border-white/40 hover:bg-[#10204a] transition-colors">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-white/10 text-white group-hover:bg-white/20 transition-colors">
+                  <Mail size={18} />
+                </span>
+                <span className="font-medium">Email</span>
+              </a>
+              <a href="https://www.linkedin.com/in/raffi" target="_blank" rel="noreferrer" className="group flex items-center gap-3 rounded-md border border-white/10 bg-[#0b1633] px-4 py-2 hover:border-white/40 hover:bg-[#10204a] transition-colors">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-white/10 text-white group-hover:bg-white/20 transition-colors">
+                  <Linkedin size={18} />
+                </span>
+                <span className="font-medium">LinkedIn</span>
+              </a>
+              <a href="https://www.instagram.com/raffi" target="_blank" rel="noreferrer" className="group flex items-center gap-3 rounded-md border border-white/10 bg-[#0b1633] px-4 py-2 hover:border-white/40 hover:bg-[#10204a] transition-colors">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-white/10 text-white group-hover:bg-white/20 transition-colors">
+                  <Instagram size={18} />
+                </span>
+                <span className="font-medium">Instagram</span>
+              </a>
+              <a href={RESUME_URL} target="_blank" rel="noreferrer" className="group flex items-center gap-3 rounded-md border border-white/10 bg-blue-600/90 px-4 py-2 text-white hover:bg-blue-600 transition-colors">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-white/10 text-white group-hover:bg-white/20 transition-colors">
+                  <FileText size={18} />
+                </span>
+                <span className="font-medium">Resume</span>
+              </a>
             </div>
           </aside>
 
