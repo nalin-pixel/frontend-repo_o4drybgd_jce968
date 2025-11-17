@@ -27,6 +27,8 @@ export default function Hero() {
   // Handle Spline events via both React handlers and runtime listeners for robustness
   const handleSplineEvent = (e) => {
     const name = e?.target?.name || e?.object?.name || e?.detail?.target?.name || ''
+    // eslint-disable-next-line no-console
+    console.debug('[Spline interaction raw event]', { name, e })
     if (name) {
       // eslint-disable-next-line no-console
       console.debug('[Spline interaction]', name)
@@ -52,6 +54,10 @@ export default function Hero() {
         const name = e?.target?.name || ''
         handleAction(name)
       })
+      spline.addEventListener?.('touchstart', (e) => {
+        const name = e?.target?.name || ''
+        handleAction(name)
+      })
     } catch (e) {
       // ignore if events aren't available
     }
@@ -73,10 +79,14 @@ export default function Hero() {
           onMouseDown={handleSplineEvent}
           onMouseUp={handleSplineEvent}
           onClick={handleSplineEvent}
+          onPointerDown={handleSplineEvent}
+          onPointerUp={handleSplineEvent}
+          onTouchStart={handleSplineEvent}
+          onTouchEnd={handleSplineEvent}
         />
       </div>
 
-      {/* dark gradient veil */}
+      {/* dark gradient veil (non-interactive) */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#050b1b]/40 via-[#050b1b]/60 to-[#050b1b] pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex flex-col lg:flex-row items-center gap-10 pointer-events-none">

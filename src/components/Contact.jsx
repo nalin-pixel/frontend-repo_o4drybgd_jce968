@@ -1,14 +1,45 @@
 import { useState } from 'react'
 import { Mail, Linkedin, Instagram } from 'lucide-react'
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || ''
+
+const categories = [
+  'product design',
+  'graphic design',
+  'photography',
+  'digital marketing',
+  'cybersecurity',
+]
+
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', message: '', category: categories[0] })
   const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setSent(true)
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.detail || 'Failed to send message')
+      }
+      setSent(true)
+      setForm({ name: '', email: '', message: '', category: categories[0] })
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -33,12 +64,27 @@ export default function Contact() {
                 <input name="email" type="email" value={form.email} onChange={handleChange} required className="mt-1 w-full rounded-md bg-[#0b1633] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="you@example.com" />
               </div>
             </div>
+
+            <div className="mt-4">
+              <label className="text-sm text-white/70">Category</label>
+              <select name="category" value={form.category} onChange={handleChange} className="mt-1 w-full rounded-md bg-[#0b1633] border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="mt-4">
               <label className="text-sm text-white/70">Message</label>
               <textarea name="message" value={form.message} onChange={handleChange} rows={5} className="mt-1 w-full rounded-md bg-[#0b1633] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Tell me about your project" />
             </div>
-            <button type="submit" className="mt-6 inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:shadow-[0_0_30px_rgba(255,255,255,0.35)] transition-all">
-              {sent ? 'Thanks! I will get back to you.' : 'Send message'}
+
+            {error && (
+              <div className="mt-4 text-sm text-red-400">{error}</div>
+            )}
+
+            <button type="submit" disabled={loading} className="mt-6 inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:shadow-[0_0_30px_rgba(255,255,255,0.35)] transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+              {loading ? 'Sending...' : sent ? 'Thanks! I will get back to you.' : 'Send message'}
             </button>
           </form>
 
