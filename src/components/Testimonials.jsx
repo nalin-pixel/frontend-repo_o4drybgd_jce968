@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import SubmitTestimonialModal from './SubmitTestimonialModal'
 
 const API = import.meta.env.VITE_BACKEND_URL || ''
 
@@ -105,6 +106,7 @@ export default function Testimonials() {
   const [dualRow, setDualRow] = useState(true)
   const [data, setData] = useState([])
   const [settings, setSettings] = useState({ marquee_a_seconds: 30, marquee_b_seconds: 28, glow_intensity: 0.25, parallax_intensity: 8 })
+  const [openSubmit, setOpenSubmit] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -170,14 +172,7 @@ export default function Testimonials() {
   const loopB = useMemo(() => Array.from({ length: 4 }).flatMap(() => [...base].reverse()), [base])
 
   const handleAddClick = () => {
-    // Simple anchor navigation to admin section where testimonials can be added
-    const el = document.querySelector('#admin')
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' })
-    } else {
-      // fallback to hash navigation
-      window.location.hash = 'admin'
-    }
+    setOpenSubmit(true)
   }
 
   return (
@@ -228,6 +223,8 @@ export default function Testimonials() {
           </button>
         </div>
       </div>
+
+      <SubmitTestimonialModal open={openSubmit} onClose={() => setOpenSubmit(false)} onSuccess={() => { setOpenSubmit(false); }} />
 
       <style>{`
         @keyframes marquee {

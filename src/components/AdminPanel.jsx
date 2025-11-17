@@ -71,13 +71,13 @@ export default function AdminPanel() {
         fetch(`${API}/api/categories`).then(r => r.json()),
         fetch(`${API}/api/clients`).then(r => r.json()),
         fetch(`${API}/api/projects`).then(r => r.json()),
-        fetch(`${API}/api/testimonials`).then(r => r.json()),
+        fetch(`${API}/api/testimonials?include_all=true`, { headers: { ...(isAdmin && authToken ? { Authorization: `Bearer ${authToken}` } : {}) } }).then(r => r.json()),
         fetch(`${API}/api/settings`).then(r => r.json()),
       ])
       setCategories(c1)
       setClients(c2)
       setProjects(c3)
-      setTestimonials(c4)
+      setTestimonials(Array.isArray(c4) ? c4 : [])
       if (s1 && s1.key) setSettings(prev => ({
         ...prev,
         ...s1,
@@ -275,7 +275,7 @@ export default function AdminPanel() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <h2 className="font-semibold mb-3">Existing</h2>
-              <List items={testimonials} fields={[["name"],["role"],["company"],["rating"],["quote"]]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
+              <List items={testimonials} fields={[["name"],["role"],["company"],["rating"],["status"],["quote"]]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
             </div>
           </div>
         )}
@@ -378,7 +378,7 @@ function ProjectForm({ onSubmit, loading, clients }) {
 }
 
 function TestimonialForm({ onSubmit, loading }) {
-  const [form, setForm] = useState({ name: '', role: '', company: '', rating: 5, quote: '' })
+  const [form, setForm] = useState({ name: '', role: '', company: '', rating: 5, quote: '', status: 'approved' })
   return (
     <form onSubmit={(e)=>{e.preventDefault(); onSubmit(form);}} className="space-y-3">
       <TextInput label="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required />
@@ -386,6 +386,12 @@ function TestimonialForm({ onSubmit, loading }) {
       <TextInput label="Company" value={form.company} onChange={e=>setForm({...form, company:e.target.value})} />
       <NumberInput label="Rating (0-5)" min={0} max={5} step={1} value={form.rating} onChange={e=>setForm({...form, rating: Number(e.target.value)})} />
       <TextArea label="Quote" rows={3} value={form.quote} onChange={e=>setForm({...form, quote:e.target.value})} required />
+      <label className="block">
+        <span className="text-sm text-white/70">Status</span>
+        <select value={form.status} onChange={e=>setForm({...form, status: e.target.value})} className="mt-1 w-full rounded-md bg-[#0b1633] border border-white/10 px-3 py-2 text-white focus:outline-none">
+          {['approved','pending','rejected'].map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </label>
       <button disabled={loading} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold">{loading? 'Saving...' : 'Save'}</button>
     </form>
   )
