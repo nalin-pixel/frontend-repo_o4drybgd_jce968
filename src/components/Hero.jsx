@@ -47,8 +47,9 @@ export default function Hero() {
       goTo('portfolio')
       return true
     }
+    // Change: pressing the Resume key routes to Contact section
     if (n.includes('resume')) {
-      window.open(RESUME_URL, '_blank', 'noopener,noreferrer')
+      goTo('contact')
       return true
     }
     if (n.includes('hire') || n.includes('contact')) {

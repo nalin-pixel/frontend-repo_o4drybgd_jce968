@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Mail, Linkedin, Instagram } from 'lucide-react'
+import { Mail, Linkedin, Instagram, FileText } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL || ''
+const RESUME_URL = import.meta.env.VITE_RESUME_URL || '/resume.pdf'
 
 const categories = [
   'product design',
@@ -91,10 +92,11 @@ export default function Contact() {
           <div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur hover:border-white/60 hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] transition-all">
               <div className="text-white/80">Prefer direct contact?</div>
-              <div className="mt-4 flex items-center gap-4">
+              <div className="mt-4 flex flex-wrap items-center gap-4">
                 <a href="mailto:raffialvri23@gmail.com" className="inline-flex items-center gap-2 text-white/80 hover:text-white"><Mail size={18}/> Email</a>
                 <a href="https://www.linkedin.com/in/raffi-alvriansyah-9117081a2/" target="_blank" className="inline-flex items-center gap-2 text-white/80 hover:text-white"><Linkedin size={18}/> LinkedIn</a>
                 <a href="https://www.instagram.com/echoesofraf/?igsh=MWJ5MHhwNXkxem4xbQ%3D%3D#" target="_blank" className="inline-flex items-center gap-2 text-white/80 hover:text-white"><Instagram size={18}/> Instagram</a>
+                <a href={RESUME_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-white/80 hover:text-white"><FileText size={18}/> Resume</a>
               </div>
             </div>
           </div>
