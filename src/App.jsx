@@ -11,6 +11,7 @@ import AuroraBackground from './components/AuroraBackground'
 import CursorGlow from './components/CursorGlow'
 import ScrollProgress from './components/ScrollProgress'
 import AdminPanel from './components/AdminPanel'
+import KeyGlowOverlay from './components/KeyGlowOverlay'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       {/* global progress bar & cursor glow */}
       <ScrollProgress />
       <CursorGlow />
+      <KeyGlowOverlay />
 
       {/* page-wide aurora wash */}
       <div className="absolute inset-0 -z-10">

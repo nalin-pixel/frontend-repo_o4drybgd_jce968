@@ -42,9 +42,28 @@ export default function AdminPanel() {
   const [settings, setSettings] = useState({ key: 'ui', marquee_a_seconds: 30, marquee_b_seconds: 28, glow_intensity: 0.25, parallax_intensity: 8 })
   const [users, setUsers] = useState([])
 
-  const auth = JSON.parse(localStorage.getItem('auth') || 'null')
+  // Auth handling (always refresh from backend to get latest flags)
+  const [auth, setAuth] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('auth') || 'null') } catch { return null }
+  })
+  const [currentUser, setCurrentUser] = useState(null)
   const authToken = auth?.token
-  const isAdmin = !!(auth?.user?.is_admin && auth?.user?.is_verified)
+  const isAdmin = !!((currentUser?.is_admin ?? auth?.user?.is_admin) && (currentUser?.is_verified ?? auth?.user?.is_verified))
+
+  const refreshMe = async () => {
+    if (!authToken) return
+    try {
+      const res = await fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${authToken}` } })
+      if (res.ok) {
+        const me = await res.json()
+        setCurrentUser(me)
+        // sync localStorage for the rest of the app
+        const nextAuth = { ...(auth || {}), user: me }
+        setAuth(nextAuth)
+        localStorage.setItem('auth', JSON.stringify(nextAuth))
+      }
+    } catch {}
+  }
 
   const fetchAll = async () => {
     try {
@@ -82,7 +101,8 @@ export default function AdminPanel() {
     }
   }
 
-  useEffect(() => { fetchAll() }, [])
+  useEffect(() => { refreshMe() }, [])
+  useEffect(() => { fetchAll() }, [isAdmin])
 
   // Handlers
   const create = async (path, body) => {
@@ -177,6 +197,9 @@ export default function AdminPanel() {
         <div className="max-w-6xl mx-auto px-4 py-10">
           <h1 className="text-2xl font-semibold">Admin</h1>
           <p className="text-white/70 mt-2">You need to sign in as a verified admin to access this area.</p>
+          {authToken && (
+            <button onClick={refreshMe} className="mt-4 rounded-md bg-blue-600 px-3 py-1.5 text-sm">Refresh access</button>
+          )}
         </div>
       </section>
     )
