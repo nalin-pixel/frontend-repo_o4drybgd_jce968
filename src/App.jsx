@@ -6,18 +6,48 @@ import PortfolioTypes from './components/PortfolioTypes'
 import Testimonials from './components/Testimonials'
 import Contact from './components/Contact'
 import SocialIsland from './components/SocialIsland'
+import MotionSection from './components/MotionSection'
+import AuroraBackground from './components/AuroraBackground'
+import CursorGlow from './components/CursorGlow'
+import ScrollProgress from './components/ScrollProgress'
 
 function App() {
   return (
-    <div className="min-h-screen bg-[#050b1b]">
+    <div className="min-h-screen bg-[#050b1b] relative">
+      {/* global progress bar & cursor glow */}
+      <ScrollProgress />
+      <CursorGlow />
+
+      {/* page-wide aurora wash */}
+      <div className="absolute inset-0 -z-10">
+        <AuroraBackground />
+      </div>
+
       <Navbar />
       <main className="mt-16">
-        <Hero />
-        <Education />
-        <WorksPreview />
-        <PortfolioTypes />
-        <Testimonials />
-        <Contact />
+        <MotionSection>
+          <Hero />
+        </MotionSection>
+
+        <MotionSection delay={0.05}>
+          <Education />
+        </MotionSection>
+
+        <MotionSection delay={0.1}>
+          <WorksPreview />
+        </MotionSection>
+
+        <MotionSection delay={0.15}>
+          <PortfolioTypes />
+        </MotionSection>
+
+        <MotionSection delay={0.2}>
+          <Testimonials />
+        </MotionSection>
+
+        <MotionSection delay={0.25}>
+          <Contact />
+        </MotionSection>
       </main>
       <SocialIsland />
     </div>
