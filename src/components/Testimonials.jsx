@@ -35,14 +35,14 @@ export default function Testimonials() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold">Client Testimonials</h2>
         <div className="mt-8 relative overflow-hidden">
-          <div className="flex gap-6 whitespace-nowrap will-change-transform animate-marquee">
+          <div className="flex gap-6 whitespace-nowrap will-change-transform animate-marquee items-stretch">
             {loopData.map((t, idx) => (
               <div
                 key={idx}
-                className="min-w-[320px] max-w-sm rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:border-white/60 transition-all"
+                className="min-w-[360px] sm:min-w-[420px] md:min-w-[520px] rounded-2xl border border-white/10 bg-white/5 p-6 md:p-7 backdrop-blur hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:border-white/60 transition-all h-auto"
               >
-                <p className="text-white/80">“{t.quote}”</p>
-                <div className="mt-4 text-sm text-white/60">{t.name} • {t.role}</div>
+                <p className="text-white/80 whitespace-normal break-words leading-relaxed text-base md:text-lg">“{t.quote}”</p>
+                <div className="mt-4 text-sm md:text-base text-white/60 whitespace-normal break-words">{t.name} • {t.role}</div>
               </div>
             ))}
           </div>
