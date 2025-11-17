@@ -5,11 +5,11 @@ import HyperdriveBackground from './HyperdriveBackground'
 const RESUME_URL = import.meta.env.VITE_RESUME_URL || '/resume.pdf'
 
 // Optional fallback mapping by stable identifiers from Spline events
-// Fill these once we see ids in the console (e.g., { 'abc123': 'work' })
+// Filled with ids captured from console events
 const FALLBACK_ID_MAP = {
-  // 'abc123': 'work',
-  // 'def456': 'resume',
-  // 'ghi789': 'contact',
+  '82a8c17a-395f-40a4-b63d-09d1b86a8818': 'work',
+  'a5c5d194-53e6-4206-ac02-5000aa34f6e0': 'resume',
+  '85e2fbad-9b63-4f63-824f-056102ee7f1c': 'contact',
 }
 
 function extractTargetInfo(evt) {
