@@ -58,6 +58,8 @@ export default function AdminPanel() {
         ...prev,
         ...s1,
       }))
+      // broadcast latest settings to listeners for live preview
+      window.dispatchEvent(new CustomEvent('ui-settings-updated', { detail: s1 }))
     } catch (e) {
       console.error(e)
       setMessage('Failed to load data')
@@ -142,7 +144,7 @@ export default function AdminPanel() {
   }
 
   return (
-    <section className="min-h-screen bg-[#050b1b] text-white">
+    <section id="admin" className="min-h-screen bg-[#050b1b] text-white">
       <div className="max-w-6xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between">
           <div>
@@ -197,7 +199,7 @@ export default function AdminPanel() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <h2 className="font-semibold mb-3">Existing</h2>
-              <List items={projects} fields={[['client_name'],['title'],['tag'],['description']]} onUpdate={(id, data)=>update('projects',id,data)} onDelete={(id)=>removeItem('projects',id)} />
+              <List items={projects} fields={[["client_name"],["title"],["tag"],["description"]]} onUpdate={(id, data)=>update('projects',id,data)} onDelete={(id)=>removeItem('projects',id)} />
             </div>
           </div>
         )}
@@ -211,7 +213,7 @@ export default function AdminPanel() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <h2 className="font-semibold mb-3">Existing</h2>
-              <List items={testimonials} fields={[['name'],['role'],['company'],['rating'],['quote']]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
+              <List items={testimonials} fields={[["name"],["role"],["company"],["rating"],["quote"]]} onUpdate={(id, data)=>update('testimonials',id,data)} onDelete={(id)=>removeItem('testimonials',id)} />
             </div>
           </div>
         )}
@@ -298,9 +300,22 @@ function TestimonialForm({ onSubmit, loading }) {
 
 function SettingsForm({ initial, onSave, loading }) {
   const [form, setForm] = useState(initial)
+  const [livePreview, setLivePreview] = useState(true)
   useEffect(() => { setForm(initial) }, [initial])
+
+  // broadcast live preview when values change
+  useEffect(() => {
+    if (livePreview) {
+      window.dispatchEvent(new CustomEvent('ui-settings-preview', { detail: form }))
+    }
+  }, [form, livePreview])
+
   return (
     <form onSubmit={(e)=>{e.preventDefault(); onSave(form)}} className="grid md:grid-cols-2 gap-4">
+      <div className="md:col-span-2 flex items-center gap-3">
+        <input id="livePrev" type="checkbox" checked={livePreview} onChange={(e)=>setLivePreview(e.target.checked)} />
+        <label htmlFor="livePrev" className="text-sm text-white/80 select-none">Live preview in testimonials</label>
+      </div>
       <NumberInput label="Marquee A seconds" min={5} max={120} step={0.5} value={form.marquee_a_seconds} onChange={e=>setForm({...form, marquee_a_seconds: Number(e.target.value)})} />
       <NumberInput label="Marquee B seconds" min={5} max={120} step={0.5} value={form.marquee_b_seconds} onChange={e=>setForm({...form, marquee_b_seconds: Number(e.target.value)})} />
       <NumberInput label="Glow intensity (0-1)" min={0} max={1} step={0.05} value={form.glow_intensity} onChange={e=>setForm({...form, glow_intensity: Number(e.target.value)})} />

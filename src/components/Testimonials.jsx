@@ -46,16 +46,37 @@ function LogoBadge({ name, logo }) {
 
 function TestimonialCard({ t, parallaxIntensity = 8, glowIntensity = 0.25 }) {
   const widthClass = sizeClassForQuote(t.quote)
-  // parallax drift using pointer position
+  // parallax drift using pointer position with mobile/reduced-motion guard
   const [offset, setOffset] = useState({ x: 0, y: 0 })
+
   useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const reduced = media.matches
+    const isMobile = window.innerWidth < 768
+    const cap = isMobile ? 4 : 12
+    const effective = reduced ? 0 : Math.min(parallaxIntensity ?? 0, cap)
+
+    let frame = 0
     const onMove = (e) => {
-      const px = ((e.clientX / window.innerWidth) - 0.5) * 2
-      const py = ((e.clientY / window.innerHeight) - 0.5) * 2
-      setOffset({ x: px * parallaxIntensity, y: py * parallaxIntensity })
+      if (effective === 0) return
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const px = (e.clientX / window.innerWidth - 0.5) * 2
+        const py = (e.clientY / window.innerHeight - 0.5) * 2
+        setOffset({ x: px * effective, y: py * effective })
+      })
     }
     window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
+    const onResize = () => setOffset({ x: 0, y: 0 })
+    window.addEventListener('resize', onResize)
+    const onChange = () => setOffset({ x: 0, y: 0 })
+    media.addEventListener?.('change', onChange)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('resize', onResize)
+      media.removeEventListener?.('change', onChange)
+      cancelAnimationFrame(frame)
+    }
   }, [parallaxIntensity])
 
   return (
@@ -128,7 +149,20 @@ export default function Testimonials() {
       }
     }
     load()
-    return () => { mounted = false }
+
+    // listen for live preview updates from Admin
+    const onPreview = (e) => {
+      const s = e.detail || {}
+      setSettings(prev => ({ ...prev, ...s }))
+    }
+    const onUpdated = (e) => {
+      const s = e.detail || {}
+      setSettings(prev => ({ ...prev, ...s }))
+    }
+    window.addEventListener('ui-settings-preview', onPreview)
+    window.addEventListener('ui-settings-updated', onUpdated)
+
+    return () => { mounted = false; window.removeEventListener('ui-settings-preview', onPreview); window.removeEventListener('ui-settings-updated', onUpdated) }
   }, [])
 
   const base = useMemo(() => data, [data])
