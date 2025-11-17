@@ -4,25 +4,30 @@ import HyperdriveBackground from './HyperdriveBackground'
 
 const RESUME_URL = import.meta.env.VITE_RESUME_URL || '/resume.pdf'
 
-// Optional fallback mapping by stable identifiers from Spline events
-// Filled with ids captured from console events
+// Fallback mapping by stable identifiers from Spline events
 const FALLBACK_ID_MAP = {
-  '82a8c17a-395f-40a4-b63d-09d1b86a8818': 'work',
-  'a5c5d194-53e6-4206-ac02-5000aa34f6e0': 'resume',
-  '85e2fbad-9b63-4f63-824f-056102ee7f1c': 'contact',
+  '82a8c17a-395f-40a4-b63d-09d1b86a8818': 'work', // Key YOU
+  'a5c5d194-53e6-4206-ac02-5000aa34f6e0': 'resume', // Key Esc
+  '85e2fbad-9b63-4f63-824f-056102ee7f1c': 'contact', // Key Send
+}
+
+// Explicit name mapping when Spline exposes non-semantic names
+const NAME_MAP = {
+  'key you': 'work',
+  'key esc': 'resume',
+  'key send': 'contact',
 }
 
 function extractTargetInfo(evt) {
   // Try common places Spline exposes a target
   const tgt = evt?.target || evt?.object || evt?.detail?.target || null
-  const name = tgt?.name || ''
-  // Probe a handful of likely id fields without throwing on cycles
-  const id = tgt?.id || tgt?.uuid || tgt?.nodeId || tgt?.refId || ''
+  const name = evt?.name || tgt?.name || ''
+  // Probe likely id fields
+  const id = evt?.id || tgt?.id || tgt?.uuid || tgt?.nodeId || tgt?.refId || ''
   const type = tgt?.type || tgt?.className || ''
-  // Coordinates if present (helpful to distinguish left/mid/right clicks)
   const pointer = {
-    x: evt?.clientX ?? evt?.detail?.clientX ?? undefined,
-    y: evt?.clientY ?? evt?.detail?.clientY ?? undefined,
+    x: evt?.clientX ?? evt?.detail?.clientX ?? evt?.pointer?.x ?? undefined,
+    y: evt?.clientY ?? evt?.detail?.clientY ?? evt?.pointer?.y ?? undefined,
   }
   return { name, id, type, pointer, rawTarget: tgt }
 }
@@ -37,34 +42,56 @@ export default function Hero() {
 
   const handleAction = (label) => {
     const n = (label || '').toLowerCase()
-    if (!n) return
+    if (!n) return false
     if (n.includes('work')) {
       goTo('portfolio')
-    } else if (n.includes('resume')) {
-      window.open(RESUME_URL, '_blank', 'noopener,noreferrer')
-    } else if (n.includes('hire') || n.includes('contact')) {
-      goTo('contact')
+      return true
     }
+    if (n.includes('resume')) {
+      window.open(RESUME_URL, '_blank', 'noopener,noreferrer')
+      return true
+    }
+    if (n.includes('hire') || n.includes('contact')) {
+      goTo('contact')
+      return true
+    }
+    return false
   }
 
-  // Central click handler: logs rich info and routes by name or fallback id map
+  // Central click handler: prefer id map, then explicit name map, then keyword heuristics
   const onAnySplineEvent = (evt) => {
     const info = extractTargetInfo(evt)
     // eslint-disable-next-line no-console
     console.debug('[Spline interaction raw event]', info)
 
-    if (info.name) {
-      // eslint-disable-next-line no-console
-      console.debug('[Spline interaction]', info.name)
-      handleAction(info.name)
-      return
-    }
+    // 1) ID mapping has top priority (works even when name is present but non-semantic)
     if (info.id && FALLBACK_ID_MAP[info.id]) {
       const mapped = FALLBACK_ID_MAP[info.id]
       // eslint-disable-next-line no-console
       console.debug('[Spline interaction fallback by id]', info.id, '→', mapped)
       handleAction(mapped)
+      return
     }
+
+    // 2) Explicit name mapping
+    const lowerName = (info.name || '').toLowerCase()
+    if (lowerName && NAME_MAP[lowerName]) {
+      const mapped = NAME_MAP[lowerName]
+      // eslint-disable-next-line no-console
+      console.debug('[Spline interaction mapped by name]', lowerName, '→', mapped)
+      handleAction(mapped)
+      return
+    }
+
+    // 3) Heuristic keywords in name
+    if (info.name) {
+      const ok = handleAction(info.name)
+      if (ok) return
+    }
+
+    // 4) No route found — log hint
+    // eslint-disable-next-line no-console
+    console.debug('[Spline] no route matched for event; name/id seen:', info.name, info.id)
   }
 
   const onSplineLoad = (spline) => {
